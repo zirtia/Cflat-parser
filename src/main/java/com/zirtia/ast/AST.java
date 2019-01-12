@@ -61,7 +61,6 @@ public class AST extends Node {
         return declarations.defuns();
     }
 
-    // called by LocalResolver
     public void setScope(ToplevelScope scope) {
         if (this.scope != null) {
             throw new Error("must not happen: ToplevelScope set twice");
@@ -76,7 +75,6 @@ public class AST extends Node {
         return scope;
     }
 
-    // called by LocalResolver
     public void setConstantTable(ConstantTable table) {
         if (this.constantTable != null) {
             throw new Error("must not happen: ConstantTable set twice");

@@ -15,7 +15,6 @@ public class LibraryLoader {
 
     static public List<String> defaultLoadPath() {
         List<String> pathes = new ArrayList<String>();
-        pathes.add(".");
         return pathes;
     }
 
@@ -52,10 +51,10 @@ public class LibraryLoader {
         return decls;
     }
 
-    public File searchLibrary(String libid) throws FileException {
+    private File searchLibrary(String libid) throws FileException {
         try {
             for (String path : loadPath) {
-                File file = new File(path + "/" + libPath(libid) + ".hb");
+                File file = new File(path + "\\" + libPath(libid) + ".hb");
                 if (file.exists()) {
                     return file;
                 }
