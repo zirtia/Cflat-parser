@@ -1,9 +1,8 @@
 package com.zirtia.ast;
-
-import com.zirtia.exception.*;
+import com.zirtia.type.Type;
 import com.zirtia.type.CompositeType;
 import com.zirtia.type.PointerType;
-import com.zirtia.type.Type;
+import com.zirtia.exception.*;
 
 public class PtrMemberNode extends LHSNode {
     public ExprNode expr;
@@ -48,6 +47,10 @@ public class PtrMemberNode extends LHSNode {
 
     protected Type origType() {
         return dereferedCompositeType().memberType(member);
+    }
+
+    public Location location() {
+        return expr.location();
     }
 
     public <S,E> E accept(ASTVisitor<S,E> visitor) {

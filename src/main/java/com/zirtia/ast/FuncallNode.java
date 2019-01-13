@@ -1,9 +1,7 @@
 package com.zirtia.ast;
-
-import com.zirtia.exception.*;
 import com.zirtia.type.*;
-
-import java.util.List;
+import com.zirtia.exception.*;
+import java.util.*;
 
 public class FuncallNode extends ExprNode {
     protected ExprNode expr;
@@ -50,6 +48,10 @@ public class FuncallNode extends ExprNode {
     // called from TypeChecker
     public void replaceArgs(List<ExprNode> args) {
         this.args = args;
+    }
+
+    public Location location() {
+        return expr.location();
     }
 
     public <S,E> E accept(ASTVisitor<S,E> visitor) {

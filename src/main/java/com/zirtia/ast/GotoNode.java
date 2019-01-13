@@ -3,8 +3,8 @@ package com.zirtia.ast;
 public class GotoNode extends StmtNode {
     protected String target;
 
-    public GotoNode(String target) {
-        super();
+    public GotoNode(Location loc, String target) {
+        super(loc);
         this.target = target;
     }
 

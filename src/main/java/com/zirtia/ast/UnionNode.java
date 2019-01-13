@@ -1,12 +1,10 @@
 package com.zirtia.ast;
-
 import com.zirtia.type.*;
-
-import java.util.List;
+import java.util.*;
 
 public class UnionNode extends CompositeTypeDefinition {
-    public UnionNode(TypeRef ref, String name, List<Slot> membs) {
-        super(ref, name, membs);
+    public UnionNode(Location loc, TypeRef ref, String name, List<Slot> membs) {
+        super(loc, ref, name, membs);
     }
 
     public String kind() {
@@ -19,7 +17,7 @@ public class UnionNode extends CompositeTypeDefinition {
 
     // #@@range/definingType{
     public Type definingType() {
-        return new UnionType(name(), members());
+        return new UnionType(name(), members(), location());
     }
     // #@@}
 

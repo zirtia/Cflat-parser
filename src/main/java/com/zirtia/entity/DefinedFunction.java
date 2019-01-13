@@ -1,8 +1,8 @@
 package com.zirtia.entity;
-
-import com.zirtia.ast.BlockNode;
+import com.zirtia.type.Type;
 import com.zirtia.ast.TypeNode;
-
+import com.zirtia.ast.BlockNode;
+import com.zirtia.exception.*;
 import java.util.List;
 
 public class DefinedFunction extends Function {
@@ -29,6 +29,7 @@ public class DefinedFunction extends Function {
         return body;
     }
 
+
     public void setScope(LocalScope scope) {
         this.scope = scope;
     }
@@ -37,9 +38,16 @@ public class DefinedFunction extends Function {
         return body().scope();
     }
 
+    /**
+     * Returns function local variables.
+     * Does NOT include paramters.
+     * Does NOT include static local variables.
+     */
     public List<DefinedVariable> localVariables() {
         return scope.allLocalVariables();
     }
+
+
 
     public <T> T accept(EntityVisitor<T> visitor) {
         return visitor.visit(this);

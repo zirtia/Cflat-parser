@@ -1,13 +1,8 @@
 package com.zirtia.entity;
-
-import com.zirtia.exception.*;
 import com.zirtia.type.Type;
 import com.zirtia.utils.ErrorHandler;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.zirtia.exception.*;
+import java.util.*;
 
 public class LocalScope extends Scope {
     protected Scope parent;
@@ -122,6 +117,17 @@ public class LocalScope extends Scope {
         buf.add(this);
         for (LocalScope s : children) {
             s.collectScope(buf);
+        }
+    }
+
+    public void checkReferences(ErrorHandler h) {
+        for (DefinedVariable var : variables.values()) {
+            if (!var.isRefered()) {
+                h.warn(var.location(), "unused variable: " + var.name());
+            }
+        }
+        for (LocalScope c : children) {
+            c.checkReferences(h);
         }
     }
 }

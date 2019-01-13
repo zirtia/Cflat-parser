@@ -1,11 +1,9 @@
 package com.zirtia.type;
-
 import com.zirtia.ast.Slot;
+import com.zirtia.ast.Location;
 import com.zirtia.exception.*;
+import java.util.*;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 abstract public class CompositeType extends NamedType {
     protected List<Slot> members;
@@ -13,8 +11,8 @@ abstract public class CompositeType extends NamedType {
     protected long cachedAlign;
     protected boolean isRecursiveChecked;
 
-    public CompositeType(String name, List<Slot> membs) {
-        super(name);
+    public CompositeType(String name, List<Slot> membs, Location loc) {
+        super(name, loc);
         this.members = membs;
         this.cachedSize = Type.sizeUnknown;
         this.cachedAlign = Type.sizeUnknown;

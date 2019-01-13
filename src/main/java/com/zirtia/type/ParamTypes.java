@@ -1,13 +1,11 @@
 package com.zirtia.type;
-
+import com.zirtia.ast.Location;
 import com.zirtia.entity.ParamSlots;
-
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class ParamTypes extends ParamSlots<Type> {
-    protected ParamTypes(List<Type> paramDescs, boolean vararg) {
-        super(paramDescs, vararg);
+    protected ParamTypes(Location loc, List<Type> paramDescs, boolean vararg) {
+        super(loc, paramDescs, vararg);
     }
 
     public List<Type> types() {

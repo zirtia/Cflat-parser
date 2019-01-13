@@ -24,6 +24,12 @@ public class AddressNode extends ExprNode {
         if (this.type != null) throw new Error("type set twice");
         this.type = type;
     }
+
+    public Location location() {
+        return expr.location();
+    }
+
+
     public <S,E> E accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);
     }

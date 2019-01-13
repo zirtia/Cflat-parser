@@ -38,8 +38,8 @@ public class CflatParser extends Parser {
 		T__45=46, VOID=47, CHAR=48, SHORT=49, INT=50, LONG=51, STRUCT=52, UNION=53, 
 		ENUM=54, STATIC=55, EXTERN=56, CONST=57, SIGNED=58, UNSIGNED=59, IF=60, 
 		ELSE=61, SWITCH=62, CASE=63, DEFAULT=64, WHILE=65, DO=66, FOR=67, RETURN=68, 
-		BREAK=69, CONTINUE=70, GOTO=71, TYPEDEF=72, IMPORT=73, SIZEOF=74, STRING=75, 
-		CHARACTER=76, IDENTIFIER=77, INTEGER=78, WS=79, LINE_COMMENT=80, COMMENT=81;
+		BREAK=69, CONTINUE=70, GOTO=71, TYPEDEF=72, IMPORT=73, SIZEOF=74, WS=75, 
+		LINE_COMMENT=76, COMMENT=77, STRING=78, CHARACTER=79, IDENTIFIER=80, INTEGER=81;
 	public static final int
 		RULE_compilation_unit = 0, RULE_declaration_file = 1, RULE_import_stmts = 2, 
 		RULE_import_stmt = 3, RULE_top_defs = 4, RULE_defvars = 5, RULE_defconst = 6, 
@@ -96,8 +96,8 @@ public class CflatParser extends Parser {
 			"CHAR", "SHORT", "INT", "LONG", "STRUCT", "UNION", "ENUM", "STATIC", 
 			"EXTERN", "CONST", "SIGNED", "UNSIGNED", "IF", "ELSE", "SWITCH", "CASE", 
 			"DEFAULT", "WHILE", "DO", "FOR", "RETURN", "BREAK", "CONTINUE", "GOTO", 
-			"TYPEDEF", "IMPORT", "SIZEOF", "STRING", "CHARACTER", "IDENTIFIER", "INTEGER", 
-			"WS", "LINE_COMMENT", "COMMENT"
+			"TYPEDEF", "IMPORT", "SIZEOF", "WS", "LINE_COMMENT", "COMMENT", "STRING", 
+			"CHARACTER", "IDENTIFIER", "INTEGER"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -149,9 +149,11 @@ public class CflatParser extends Parser {
 
 	    private LibraryLoader loader;
 	    private Set<String> knownTypedefs;
+	    private String sourceName;
 
-	    public CflatParser(TokenStream token,LibraryLoader loader) {
+	    public CflatParser(String name,TokenStream token,LibraryLoader loader) {
 	        this(token);
+	        sourceName = name;
 	        this.loader = loader;
 	        this.knownTypedefs = new HashSet<String>();
 	    }
@@ -181,19 +183,19 @@ public class CflatParser extends Parser {
 	        return knownTypedefs.contains(name);
 	    }
 
-	    private IntegerLiteralNode integerNode(String image) {
+	    private IntegerLiteralNode integerNode(Location loc,String image) {
 	        long i = integerValue(image);
 	        if (image.endsWith("UL")) {
-	            return new IntegerLiteralNode(IntegerTypeRef.ulongRef(), i);
+	            return new IntegerLiteralNode(loc,IntegerTypeRef.ulongRef(), i);
 	        }
 	        else if (image.endsWith("L")) {
-	            return new IntegerLiteralNode(IntegerTypeRef.longRef(), i);
+	            return new IntegerLiteralNode(loc,IntegerTypeRef.longRef(), i);
 	        }
 	        else if (image.endsWith("U")) {
-	            return new IntegerLiteralNode(IntegerTypeRef.uintRef(), i);
+	            return new IntegerLiteralNode(loc,IntegerTypeRef.uintRef(), i);
 	        }
 	        else {
-	            return new IntegerLiteralNode(IntegerTypeRef.intRef(), i);
+	            return new IntegerLiteralNode(loc,IntegerTypeRef.intRef(), i);
 	        }
 	    }
 
@@ -276,6 +278,10 @@ public class CflatParser extends Parser {
 	        }
 	    }
 
+	    private Location location(Token t) {
+	        return new Location(sourceName, t);
+	    }
+
 	public CflatParser(TokenStream input) {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
@@ -310,7 +316,7 @@ public class CflatParser extends Parser {
 
 			        Declarations decls = ((Compilation_unitContext)_localctx).tds.decls;
 			        decls.add(((Compilation_unitContext)_localctx).iss.impdecls);
-			        ((Compilation_unitContext)_localctx).ast =   new AST(decls);
+			        ((Compilation_unitContext)_localctx).ast =   new AST(location((((Compilation_unitContext)_localctx).iss!=null?(((Compilation_unitContext)_localctx).iss.start):null)),decls);
 			    
 			}
 		}
@@ -1021,6 +1027,7 @@ public class CflatParser extends Parser {
 
 	public static class ParamsContext extends ParserRuleContext {
 		public Params parameters;
+		public Token t;
 		public FixedparamsContext fps;
 		public TerminalNode VOID() { return getToken(CflatParser.VOID, 0); }
 		public FixedparamsContext fixedparams() {
@@ -1044,9 +1051,9 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(233);
-				match(VOID);
+				((ParamsContext)_localctx).t = match(VOID);
 
-				            ((ParamsContext)_localctx).parameters =  new Params(new ArrayList<Parameter>());
+				            ((ParamsContext)_localctx).parameters =  new Params(location(((ParamsContext)_localctx).t),new ArrayList<Parameter>());
 				        
 				}
 				break;
@@ -1143,7 +1150,7 @@ public class CflatParser extends Parser {
 			}
 			_ctx.stop = _input.LT(-1);
 
-			        ((FixedparamsContext)_localctx).parameters =  new Params(parameters1);
+			        ((FixedparamsContext)_localctx).parameters =  new Params(((FixedparamsContext)_localctx).p.parameter.location(),parameters1);
 			    
 		}
 		catch (RecognitionException re) {
@@ -1200,6 +1207,7 @@ public class CflatParser extends Parser {
 
 	public static class BlockContext extends ParserRuleContext {
 		public BlockNode blockNode;
+		public Token t;
 		public Defvar_listContext dvl;
 		public StmtsContext ss;
 		public Defvar_listContext defvar_list() {
@@ -1221,7 +1229,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(259);
-			match(T__7);
+			((BlockContext)_localctx).t = match(T__7);
 			setState(260);
 			((BlockContext)_localctx).dvl = defvar_list();
 			setState(261);
@@ -1229,7 +1237,7 @@ public class CflatParser extends Parser {
 			setState(262);
 			match(T__8);
 
-			            ((BlockContext)_localctx).blockNode =  new BlockNode(((BlockContext)_localctx).dvl.result,((BlockContext)_localctx).ss.ss);
+			            ((BlockContext)_localctx).blockNode =  new BlockNode(location(((BlockContext)_localctx).t),((BlockContext)_localctx).dvl.result,((BlockContext)_localctx).ss.ss);
 			        
 			}
 		}
@@ -1303,6 +1311,7 @@ public class CflatParser extends Parser {
 
 	public static class DefstructContext extends ParserRuleContext {
 		public StructNode structNode;
+		public Token t;
 		public Token n;
 		public Member_listContext ml;
 		public TerminalNode STRUCT() { return getToken(CflatParser.STRUCT, 0); }
@@ -1323,7 +1332,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(273);
-			match(STRUCT);
+			((DefstructContext)_localctx).t = match(STRUCT);
 			setState(274);
 			((DefstructContext)_localctx).n = match(IDENTIFIER);
 			setState(275);
@@ -1331,7 +1340,7 @@ public class CflatParser extends Parser {
 			setState(276);
 			match(T__1);
 
-			         ((DefstructContext)_localctx).structNode =  new StructNode(new StructTypeRef((((DefstructContext)_localctx).n!=null?((DefstructContext)_localctx).n.getText():null)), (((DefstructContext)_localctx).n!=null?((DefstructContext)_localctx).n.getText():null), ((DefstructContext)_localctx).ml.membs);
+			         ((DefstructContext)_localctx).structNode =  new StructNode(location(((DefstructContext)_localctx).t),new StructTypeRef((((DefstructContext)_localctx).n!=null?((DefstructContext)_localctx).n.getText():null)), (((DefstructContext)_localctx).n!=null?((DefstructContext)_localctx).n.getText():null), ((DefstructContext)_localctx).ml.membs);
 			     
 			}
 		}
@@ -1348,6 +1357,7 @@ public class CflatParser extends Parser {
 
 	public static class DefunionContext extends ParserRuleContext {
 		public UnionNode unionNode;
+		public Token t;
 		public Token n;
 		public Member_listContext ml;
 		public TerminalNode UNION() { return getToken(CflatParser.UNION, 0); }
@@ -1368,7 +1378,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(279);
-			match(UNION);
+			((DefunionContext)_localctx).t = match(UNION);
 			setState(280);
 			((DefunionContext)_localctx).n = match(IDENTIFIER);
 			setState(281);
@@ -1376,7 +1386,7 @@ public class CflatParser extends Parser {
 			setState(282);
 			match(T__1);
 
-			         ((DefunionContext)_localctx).unionNode =  new UnionNode(new UnionTypeRef((((DefunionContext)_localctx).n!=null?((DefunionContext)_localctx).n.getText():null)), (((DefunionContext)_localctx).n!=null?((DefunionContext)_localctx).n.getText():null), ((DefunionContext)_localctx).ml.membs);
+			         ((DefunionContext)_localctx).unionNode =  new UnionNode(location(((DefunionContext)_localctx).t),new UnionTypeRef((((DefunionContext)_localctx).n!=null?((DefunionContext)_localctx).n.getText():null)), (((DefunionContext)_localctx).n!=null?((DefunionContext)_localctx).n.getText():null), ((DefunionContext)_localctx).ml.membs);
 			     
 			}
 		}
@@ -1735,7 +1745,7 @@ public class CflatParser extends Parser {
 				setState(329);
 				match(T__1);
 
-				            ((StmtContext)_localctx).stmtNode =  new ExprStmtNode(((StmtContext)_localctx).e.exprNode);
+				            ((StmtContext)_localctx).stmtNode =  new ExprStmtNode(((StmtContext)_localctx).e.exprNode.location(),((StmtContext)_localctx).e.exprNode);
 				        
 				}
 				break;
@@ -1870,7 +1880,7 @@ public class CflatParser extends Parser {
 			setState(366);
 			((Labeled_stmtContext)_localctx).s = stmt();
 
-			            ((Labeled_stmtContext)_localctx).labelNode =  new LabelNode((((Labeled_stmtContext)_localctx).t!=null?((Labeled_stmtContext)_localctx).t.getText():null), ((Labeled_stmtContext)_localctx).s.stmtNode);
+			            ((Labeled_stmtContext)_localctx).labelNode =  new LabelNode(location(((Labeled_stmtContext)_localctx).t),(((Labeled_stmtContext)_localctx).t!=null?((Labeled_stmtContext)_localctx).t.getText():null), ((Labeled_stmtContext)_localctx).s.stmtNode);
 			        
 			}
 		}
@@ -1887,6 +1897,7 @@ public class CflatParser extends Parser {
 
 	public static class If_stmtContext extends ParserRuleContext {
 		public IfNode ifNode;
+		public Token t;
 		public ExprContext cond;
 		public StmtContext thenBody;
 		public StmtContext elseBody;
@@ -1914,7 +1925,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(369);
-			match(IF);
+			((If_stmtContext)_localctx).t = match(IF);
 			setState(370);
 			match(T__4);
 			setState(371);
@@ -1936,7 +1947,7 @@ public class CflatParser extends Parser {
 				break;
 			}
 
-			            ((If_stmtContext)_localctx).ifNode =   new IfNode(((If_stmtContext)_localctx).cond.exprNode, ((If_stmtContext)_localctx).thenBody.stmtNode, ((If_stmtContext)_localctx).elseBody.stmtNode);
+			            ((If_stmtContext)_localctx).ifNode =   new IfNode(location(((If_stmtContext)_localctx).t),((If_stmtContext)_localctx).cond.exprNode, ((If_stmtContext)_localctx).thenBody.stmtNode, ((If_stmtContext)_localctx).elseBody.stmtNode);
 			        
 			}
 		}
@@ -1953,6 +1964,7 @@ public class CflatParser extends Parser {
 
 	public static class While_stmtContext extends ParserRuleContext {
 		public WhileNode whileNode;
+		public Token t;
 		public ExprContext cond;
 		public StmtContext body;
 		public TerminalNode WHILE() { return getToken(CflatParser.WHILE, 0); }
@@ -1975,7 +1987,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(380);
-			match(WHILE);
+			((While_stmtContext)_localctx).t = match(WHILE);
 			setState(381);
 			match(T__4);
 			setState(382);
@@ -1985,7 +1997,7 @@ public class CflatParser extends Parser {
 			setState(384);
 			((While_stmtContext)_localctx).body = stmt();
 
-			            ((While_stmtContext)_localctx).whileNode =  new WhileNode(((While_stmtContext)_localctx).cond.exprNode, ((While_stmtContext)_localctx).body.stmtNode);
+			            ((While_stmtContext)_localctx).whileNode =  new WhileNode(location(((While_stmtContext)_localctx).t),((While_stmtContext)_localctx).cond.exprNode, ((While_stmtContext)_localctx).body.stmtNode);
 			        
 			}
 		}
@@ -2002,10 +2014,11 @@ public class CflatParser extends Parser {
 
 	public static class Dowhile_stmtContext extends ParserRuleContext {
 		public DoWhileNode doWhileNode;
+		public Token t;
 		public StmtContext body;
 		public ExprContext cond;
-		public TerminalNode DO() { return getToken(CflatParser.DO, 0); }
 		public TerminalNode WHILE() { return getToken(CflatParser.WHILE, 0); }
+		public TerminalNode DO() { return getToken(CflatParser.DO, 0); }
 		public StmtContext stmt() {
 			return getRuleContext(StmtContext.class,0);
 		}
@@ -2025,7 +2038,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(387);
-			match(DO);
+			((Dowhile_stmtContext)_localctx).t = match(DO);
 			setState(388);
 			((Dowhile_stmtContext)_localctx).body = stmt();
 			setState(389);
@@ -2039,7 +2052,7 @@ public class CflatParser extends Parser {
 			setState(393);
 			match(T__1);
 
-			            ((Dowhile_stmtContext)_localctx).doWhileNode =  new DoWhileNode( ((Dowhile_stmtContext)_localctx).body.stmtNode, ((Dowhile_stmtContext)_localctx).cond.exprNode);
+			            ((Dowhile_stmtContext)_localctx).doWhileNode =  new DoWhileNode( location(((Dowhile_stmtContext)_localctx).t),((Dowhile_stmtContext)_localctx).body.stmtNode, ((Dowhile_stmtContext)_localctx).cond.exprNode);
 			        
 			}
 		}
@@ -2056,6 +2069,7 @@ public class CflatParser extends Parser {
 
 	public static class For_stmtContext extends ParserRuleContext {
 		public ForNode forNode;
+		public Token t;
 		public ExprContext init;
 		public ExprContext cond;
 		public ExprContext incr;
@@ -2084,7 +2098,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(396);
-			match(FOR);
+			((For_stmtContext)_localctx).t = match(FOR);
 			setState(397);
 			match(T__4);
 			setState(399);
@@ -2126,7 +2140,7 @@ public class CflatParser extends Parser {
 			setState(410);
 			((For_stmtContext)_localctx).body = stmt();
 
-			            ((For_stmtContext)_localctx).forNode =  new ForNode(((For_stmtContext)_localctx).init.exprNode, ((For_stmtContext)_localctx).cond.exprNode, ((For_stmtContext)_localctx).incr.exprNode, ((For_stmtContext)_localctx).body.stmtNode);
+			            ((For_stmtContext)_localctx).forNode =  new ForNode(location(((For_stmtContext)_localctx).t),((For_stmtContext)_localctx).init.exprNode, ((For_stmtContext)_localctx).cond.exprNode, ((For_stmtContext)_localctx).incr.exprNode, ((For_stmtContext)_localctx).body.stmtNode);
 			        
 			}
 		}
@@ -2143,6 +2157,7 @@ public class CflatParser extends Parser {
 
 	public static class Switch_stmtContext extends ParserRuleContext {
 		public SwitchNode switchNode;
+		public Token t;
 		public ExprContext cond;
 		public Case_clausesContext bodies;
 		public TerminalNode SWITCH() { return getToken(CflatParser.SWITCH, 0); }
@@ -2165,7 +2180,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(413);
-			match(SWITCH);
+			((Switch_stmtContext)_localctx).t = match(SWITCH);
 			setState(414);
 			match(T__4);
 			setState(415);
@@ -2179,7 +2194,7 @@ public class CflatParser extends Parser {
 			setState(419);
 			match(T__8);
 
-			            ((Switch_stmtContext)_localctx).switchNode =  new SwitchNode(((Switch_stmtContext)_localctx).cond.exprNode, ((Switch_stmtContext)_localctx).bodies.clauses);
+			            ((Switch_stmtContext)_localctx).switchNode =  new SwitchNode(location(((Switch_stmtContext)_localctx).t),((Switch_stmtContext)_localctx).cond.exprNode, ((Switch_stmtContext)_localctx).bodies.clauses);
 			        
 			}
 		}
@@ -2291,7 +2306,7 @@ public class CflatParser extends Parser {
 			setState(436);
 			((Case_clauseContext)_localctx).body = case_body();
 
-			         ((Case_clauseContext)_localctx).caseNode =   new CaseNode(((Case_clauseContext)_localctx).values.values, ((Case_clauseContext)_localctx).body.blockNode);
+			         ((Case_clauseContext)_localctx).caseNode =   new CaseNode(((Case_clauseContext)_localctx).body.blockNode.location(),((Case_clauseContext)_localctx).values.values, ((Case_clauseContext)_localctx).body.blockNode);
 			        
 			}
 		}
@@ -2395,7 +2410,7 @@ public class CflatParser extends Parser {
 			setState(450);
 			((Default_clauseContext)_localctx).body = case_body();
 
-			            ((Default_clauseContext)_localctx).caseNode =  new CaseNode(new ArrayList<ExprNode>(), ((Default_clauseContext)_localctx).body.blockNode);
+			            ((Default_clauseContext)_localctx).caseNode =  new CaseNode(((Default_clauseContext)_localctx).body.blockNode.location(),new ArrayList<ExprNode>(), ((Default_clauseContext)_localctx).body.blockNode);
 			        
 			}
 		}
@@ -2458,7 +2473,7 @@ public class CflatParser extends Parser {
 			            if (! (stmts.getLast() instanceof BreakNode)) {
 			                throw new Error("missing break statement at the last of case clause");
 			            }
-			             ((Case_bodyContext)_localctx).blockNode =   new BlockNode(new ArrayList<DefinedVariable>(),stmts);
+			             ((Case_bodyContext)_localctx).blockNode =   new BlockNode(stmts.get(0).location(),new ArrayList<DefinedVariable>(),stmts);
 			    
 		}
 		catch (RecognitionException re) {
@@ -2474,6 +2489,7 @@ public class CflatParser extends Parser {
 
 	public static class Goto_stmtContext extends ParserRuleContext {
 		public GotoNode gotoNode;
+		public Token t;
 		public Token n;
 		public TerminalNode GOTO() { return getToken(CflatParser.GOTO, 0); }
 		public TerminalNode IDENTIFIER() { return getToken(CflatParser.IDENTIFIER, 0); }
@@ -2490,7 +2506,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(460);
-			match(GOTO);
+			((Goto_stmtContext)_localctx).t = match(GOTO);
 			setState(461);
 			((Goto_stmtContext)_localctx).n = match(IDENTIFIER);
 			setState(462);
@@ -2498,7 +2514,7 @@ public class CflatParser extends Parser {
 			}
 			_ctx.stop = _input.LT(-1);
 
-			        ((Goto_stmtContext)_localctx).gotoNode =  new GotoNode((((Goto_stmtContext)_localctx).n!=null?((Goto_stmtContext)_localctx).n.getText():null));
+			        ((Goto_stmtContext)_localctx).gotoNode =  new GotoNode(location(((Goto_stmtContext)_localctx).t),(((Goto_stmtContext)_localctx).n!=null?((Goto_stmtContext)_localctx).n.getText():null));
 			    
 		}
 		catch (RecognitionException re) {
@@ -2514,6 +2530,7 @@ public class CflatParser extends Parser {
 
 	public static class Break_stmtContext extends ParserRuleContext {
 		public BreakNode breakNode;
+		public Token t;
 		public TerminalNode BREAK() { return getToken(CflatParser.BREAK, 0); }
 		public Break_stmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2528,13 +2545,13 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(464);
-			match(BREAK);
+			((Break_stmtContext)_localctx).t = match(BREAK);
 			setState(465);
 			match(T__1);
 			}
 			_ctx.stop = _input.LT(-1);
 
-			        ((Break_stmtContext)_localctx).breakNode =  new BreakNode();
+			        ((Break_stmtContext)_localctx).breakNode =  new BreakNode(location(((Break_stmtContext)_localctx).t));
 			    
 		}
 		catch (RecognitionException re) {
@@ -2550,6 +2567,7 @@ public class CflatParser extends Parser {
 
 	public static class Continue_stmtContext extends ParserRuleContext {
 		public ContinueNode continueNode;
+		public Token t;
 		public TerminalNode CONTINUE() { return getToken(CflatParser.CONTINUE, 0); }
 		public Continue_stmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2564,13 +2582,13 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(467);
-			match(CONTINUE);
+			((Continue_stmtContext)_localctx).t = match(CONTINUE);
 			setState(468);
 			match(T__1);
 			}
 			_ctx.stop = _input.LT(-1);
 
-			        ((Continue_stmtContext)_localctx).continueNode =  new ContinueNode();
+			        ((Continue_stmtContext)_localctx).continueNode =  new ContinueNode(location(((Continue_stmtContext)_localctx).t));
 			    
 		}
 		catch (RecognitionException re) {
@@ -2586,6 +2604,7 @@ public class CflatParser extends Parser {
 
 	public static class Return_stmtContext extends ParserRuleContext {
 		public ReturnNode returnNode;
+		public Token t;
 		public ExprContext expr0;
 		public TerminalNode RETURN() { return getToken(CflatParser.RETURN, 0); }
 		public ExprContext expr() {
@@ -2608,11 +2627,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(470);
-				match(RETURN);
+				((Return_stmtContext)_localctx).t = match(RETURN);
 				setState(471);
 				match(T__1);
 
-				            ((Return_stmtContext)_localctx).returnNode =   new ReturnNode(null);
+				            ((Return_stmtContext)_localctx).returnNode =   new ReturnNode(location(((Return_stmtContext)_localctx).t),null);
 				        
 				}
 				break;
@@ -2620,13 +2639,13 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(473);
-				match(RETURN);
+				((Return_stmtContext)_localctx).t = match(RETURN);
 				setState(474);
 				((Return_stmtContext)_localctx).expr0 = expr();
 				setState(475);
 				match(T__1);
 
-				            ((Return_stmtContext)_localctx).returnNode =   new ReturnNode(((Return_stmtContext)_localctx).expr0.exprNode);
+				            ((Return_stmtContext)_localctx).returnNode =   new ReturnNode(location(((Return_stmtContext)_localctx).t),((Return_stmtContext)_localctx).expr0.exprNode);
 				        
 				}
 				break;
@@ -2928,6 +2947,7 @@ public class CflatParser extends Parser {
 
 	public static class Typeref_baseContext extends ParserRuleContext {
 		public TypeRef typeRef;
+		public Token t;
 		public Token n;
 		public TerminalNode VOID() { return getToken(CflatParser.VOID, 0); }
 		public TerminalNode CHAR() { return getToken(CflatParser.CHAR, 0); }
@@ -2955,9 +2975,9 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(527);
-				match(VOID);
+				((Typeref_baseContext)_localctx).t = match(VOID);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   new VoidTypeRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   new VoidTypeRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -2965,9 +2985,9 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(529);
-				match(CHAR);
+				((Typeref_baseContext)_localctx).t = match(CHAR);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.charRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.charRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -2975,9 +2995,9 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(531);
-				match(SHORT);
+				((Typeref_baseContext)_localctx).t = match(SHORT);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.shortRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.shortRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -2985,9 +3005,9 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(533);
-				match(INT);
+				((Typeref_baseContext)_localctx).t = match(INT);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.intRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.intRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -2995,9 +3015,9 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(535);
-				match(LONG);
+				((Typeref_baseContext)_localctx).t = match(LONG);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.longRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.longRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -3005,11 +3025,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 6);
 				{
 				setState(537);
-				match(UNSIGNED);
+				((Typeref_baseContext)_localctx).t = match(UNSIGNED);
 				setState(538);
 				match(CHAR);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.ucharRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.ucharRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -3017,11 +3037,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 7);
 				{
 				setState(540);
-				match(UNSIGNED);
+				((Typeref_baseContext)_localctx).t = match(UNSIGNED);
 				setState(541);
 				match(SHORT);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.ushortRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.ushortRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -3029,11 +3049,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 8);
 				{
 				setState(543);
-				match(UNSIGNED);
+				((Typeref_baseContext)_localctx).t = match(UNSIGNED);
 				setState(544);
 				match(INT);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.uintRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.uintRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -3041,11 +3061,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 9);
 				{
 				setState(546);
-				match(UNSIGNED);
+				((Typeref_baseContext)_localctx).t = match(UNSIGNED);
 				setState(547);
 				match(LONG);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.ulongRef();
+				            ((Typeref_baseContext)_localctx).typeRef =   IntegerTypeRef.ulongRef(location(((Typeref_baseContext)_localctx).t));
 				        
 				}
 				break;
@@ -3053,11 +3073,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 10);
 				{
 				setState(549);
-				match(STRUCT);
+				((Typeref_baseContext)_localctx).t = match(STRUCT);
 				setState(550);
 				((Typeref_baseContext)_localctx).n = match(IDENTIFIER);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   new StructTypeRef((((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null));
+				            ((Typeref_baseContext)_localctx).typeRef =   new StructTypeRef(location(((Typeref_baseContext)_localctx).t),(((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null));
 				        
 				}
 				break;
@@ -3065,11 +3085,11 @@ public class CflatParser extends Parser {
 				enterOuterAlt(_localctx, 11);
 				{
 				setState(552);
-				match(UNION);
+				((Typeref_baseContext)_localctx).t = match(UNION);
 				setState(553);
 				((Typeref_baseContext)_localctx).n = match(IDENTIFIER);
 
-				            ((Typeref_baseContext)_localctx).typeRef =   new UnionTypeRef((((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null));
+				            ((Typeref_baseContext)_localctx).typeRef =   new UnionTypeRef(location(((Typeref_baseContext)_localctx).t),(((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null));
 				        
 				}
 				break;
@@ -3080,7 +3100,7 @@ public class CflatParser extends Parser {
 				((Typeref_baseContext)_localctx).n = match(IDENTIFIER);
 
 				           if (isType((((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null))){
-				                ((Typeref_baseContext)_localctx).typeRef =   new UserTypeRef((((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null));
+				                ((Typeref_baseContext)_localctx).typeRef =   new UserTypeRef(location(((Typeref_baseContext)_localctx).n),(((Typeref_baseContext)_localctx).n!=null?((Typeref_baseContext)_localctx).n.getText():null));
 				           }
 				        
 				}
@@ -3100,6 +3120,7 @@ public class CflatParser extends Parser {
 
 	public static class TypedefContext extends ParserRuleContext {
 		public TypedefNode typedefNode;
+		public Token td;
 		public TyperefContext t;
 		public Token n;
 		public TerminalNode TYPEDEF() { return getToken(CflatParser.TYPEDEF, 0); }
@@ -3120,7 +3141,7 @@ public class CflatParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(559);
-			match(TYPEDEF);
+			((TypedefContext)_localctx).td = match(TYPEDEF);
 			setState(560);
 			((TypedefContext)_localctx).t = typeref();
 			setState(561);
@@ -3128,7 +3149,7 @@ public class CflatParser extends Parser {
 			setState(562);
 			match(T__1);
 			   addType((((TypedefContext)_localctx).n!=null?((TypedefContext)_localctx).n.getText():null));
-			        ((TypedefContext)_localctx).typedefNode =   new TypedefNode(((TypedefContext)_localctx).t.typeRef, (((TypedefContext)_localctx).n!=null?((TypedefContext)_localctx).n.getText():null));
+			        ((TypedefContext)_localctx).typedefNode =   new TypedefNode(location(((TypedefContext)_localctx).td),((TypedefContext)_localctx).t.typeRef, (((TypedefContext)_localctx).n!=null?((TypedefContext)_localctx).n.getText():null));
 			    
 			}
 		}
@@ -4564,7 +4585,7 @@ public class CflatParser extends Parser {
 				setState(845);
 				((PrimaryContext)_localctx).t = match(INTEGER);
 
-				            ((PrimaryContext)_localctx).exprNode =  integerNode((((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null));
+				            ((PrimaryContext)_localctx).exprNode =  integerNode(location(((PrimaryContext)_localctx).t),(((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null));
 				        
 				}
 				break;
@@ -4574,7 +4595,7 @@ public class CflatParser extends Parser {
 				setState(847);
 				((PrimaryContext)_localctx).t = match(CHARACTER);
 
-				            ((PrimaryContext)_localctx).exprNode =  new IntegerLiteralNode(IntegerTypeRef.charRef(),characterCode((((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null)));
+				            ((PrimaryContext)_localctx).exprNode =  new IntegerLiteralNode(location(((PrimaryContext)_localctx).t),IntegerTypeRef.charRef(),characterCode((((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null)));
 				        
 				}
 				break;
@@ -4584,7 +4605,7 @@ public class CflatParser extends Parser {
 				setState(849);
 				((PrimaryContext)_localctx).t = match(STRING);
 
-				            ((PrimaryContext)_localctx).exprNode =  new StringLiteralNode(new PointerTypeRef(IntegerTypeRef.charRef()),stringValue((((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null)));
+				            ((PrimaryContext)_localctx).exprNode =  new StringLiteralNode(location(((PrimaryContext)_localctx).t),new PointerTypeRef(IntegerTypeRef.charRef()),stringValue((((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null)));
 				        
 				}
 				break;
@@ -4594,7 +4615,7 @@ public class CflatParser extends Parser {
 				setState(851);
 				((PrimaryContext)_localctx).t = match(IDENTIFIER);
 
-				            ((PrimaryContext)_localctx).exprNode =  new VariableNode((((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null));
+				            ((PrimaryContext)_localctx).exprNode =  new VariableNode(location(((PrimaryContext)_localctx).t),(((PrimaryContext)_localctx).t!=null?((PrimaryContext)_localctx).t.getText():null));
 				        
 				}
 				break;
@@ -4712,8 +4733,8 @@ public class CflatParser extends Parser {
 		"\2\2\u0094\u0095\3\2\2\2\u0095\5\3\2\2\2\u0096\u0094\3\2\2\2\u0097\u0098"+
 		"\5\b\5\2\u0098\u0099\b\4\1\2\u0099\u009b\3\2\2\2\u009a\u0097\3\2\2\2\u009b"+
 		"\u009e\3\2\2\2\u009c\u009a\3\2\2\2\u009c\u009d\3\2\2\2\u009d\7\3\2\2\2"+
-		"\u009e\u009c\3\2\2\2\u009f\u00a0\7K\2\2\u00a0\u00a1\7O\2\2\u00a1\u00a7"+
-		"\b\5\1\2\u00a2\u00a3\7\3\2\2\u00a3\u00a4\7O\2\2\u00a4\u00a6\b\5\1\2\u00a5"+
+		"\u009e\u009c\3\2\2\2\u009f\u00a0\7K\2\2\u00a0\u00a1\7R\2\2\u00a1\u00a7"+
+		"\b\5\1\2\u00a2\u00a3\7\3\2\2\u00a3\u00a4\7R\2\2\u00a4\u00a6\b\5\1\2\u00a5"+
 		"\u00a2\3\2\2\2\u00a6\u00a9\3\2\2\2\u00a7\u00a5\3\2\2\2\u00a7\u00a8\3\2"+
 		"\2\2\u00a8\u00aa\3\2\2\2\u00a9\u00a7\3\2\2\2\u00aa\u00ab\7\4\2\2\u00ab"+
 		"\t\3\2\2\2\u00ac\u00ad\5\20\t\2\u00ad\u00ae\b\6\1\2\u00ae\u00bf\3\2\2"+
@@ -4725,15 +4746,15 @@ public class CflatParser extends Parser {
 		"\2\2\u00be\u00b5\3\2\2\2\u00be\u00b8\3\2\2\2\u00be\u00bb\3\2\2\2\u00bf"+
 		"\u00c2\3\2\2\2\u00c0\u00be\3\2\2\2\u00c0\u00c1\3\2\2\2\u00c1\13\3\2\2"+
 		"\2\u00c2\u00c0\3\2\2\2\u00c3\u00c4\5\22\n\2\u00c4\u00c5\5L\'\2\u00c5\u00c8"+
-		"\7O\2\2\u00c6\u00c7\7\5\2\2\u00c7\u00c9\5X-\2\u00c8\u00c6\3\2\2\2\u00c8"+
+		"\7R\2\2\u00c6\u00c7\7\5\2\2\u00c7\u00c9\5X-\2\u00c8\u00c6\3\2\2\2\u00c8"+
 		"\u00c9\3\2\2\2\u00c9\u00ca\3\2\2\2\u00ca\u00d4\b\7\1\2\u00cb\u00cc\7\6"+
-		"\2\2\u00cc\u00cf\7O\2\2\u00cd\u00ce\7\5\2\2\u00ce\u00d0\5X-\2\u00cf\u00cd"+
+		"\2\2\u00cc\u00cf\7R\2\2\u00cd\u00ce\7\5\2\2\u00ce\u00d0\5X-\2\u00cf\u00cd"+
 		"\3\2\2\2\u00cf\u00d0\3\2\2\2\u00d0\u00d1\3\2\2\2\u00d1\u00d3\b\7\1\2\u00d2"+
 		"\u00cb\3\2\2\2\u00d3\u00d6\3\2\2\2\u00d4\u00d2\3\2\2\2\u00d4\u00d5\3\2"+
 		"\2\2\u00d5\u00d7\3\2\2\2\u00d6\u00d4\3\2\2\2\u00d7\u00d8\7\4\2\2\u00d8"+
-		"\r\3\2\2\2\u00d9\u00da\7;\2\2\u00da\u00db\5L\'\2\u00db\u00dc\7O\2\2\u00dc"+
+		"\r\3\2\2\2\u00d9\u00da\7;\2\2\u00da\u00db\5L\'\2\u00db\u00dc\7R\2\2\u00dc"+
 		"\u00dd\7\5\2\2\u00dd\u00de\5X-\2\u00de\u00df\7\4\2\2\u00df\17\3\2\2\2"+
-		"\u00e0\u00e1\5\22\n\2\u00e1\u00e2\5N(\2\u00e2\u00e3\7O\2\2\u00e3\u00e4"+
+		"\u00e0\u00e1\5\22\n\2\u00e1\u00e2\5N(\2\u00e2\u00e3\7R\2\2\u00e3\u00e4"+
 		"\7\7\2\2\u00e4\u00e5\5\24\13\2\u00e5\u00e6\7\b\2\2\u00e6\u00e7\5\32\16"+
 		"\2\u00e7\21\3\2\2\2\u00e8\u00ea\79\2\2\u00e9\u00e8\3\2\2\2\u00e9\u00ea"+
 		"\3\2\2\2\u00ea\23\3\2\2\2\u00eb\u00ec\7\61\2\2\u00ec\u00f6\b\13\1\2\u00ed"+
@@ -4744,22 +4765,22 @@ public class CflatParser extends Parser {
 		"\u00fa\7\6\2\2\u00fa\u00fb\5\30\r\2\u00fb\u00fc\b\f\1\2\u00fc\u00fe\3"+
 		"\2\2\2\u00fd\u00f9\3\2\2\2\u00fe\u0101\3\2\2\2\u00ff\u00fd\3\2\2\2\u00ff"+
 		"\u0100\3\2\2\2\u0100\27\3\2\2\2\u0101\u00ff\3\2\2\2\u0102\u0103\5L\'\2"+
-		"\u0103\u0104\7O\2\2\u0104\31\3\2\2\2\u0105\u0106\7\n\2\2\u0106\u0107\5"+
+		"\u0103\u0104\7R\2\2\u0104\31\3\2\2\2\u0105\u0106\7\n\2\2\u0106\u0107\5"+
 		"\34\17\2\u0107\u0108\5*\26\2\u0108\u0109\7\13\2\2\u0109\u010a\b\16\1\2"+
 		"\u010a\33\3\2\2\2\u010b\u010c\5\f\7\2\u010c\u010d\b\17\1\2\u010d\u010f"+
 		"\3\2\2\2\u010e\u010b\3\2\2\2\u010f\u0112\3\2\2\2\u0110\u010e\3\2\2\2\u0110"+
 		"\u0111\3\2\2\2\u0111\35\3\2\2\2\u0112\u0110\3\2\2\2\u0113\u0114\7\66\2"+
-		"\2\u0114\u0115\7O\2\2\u0115\u0116\5\"\22\2\u0116\u0117\7\4\2\2\u0117\u0118"+
-		"\b\20\1\2\u0118\37\3\2\2\2\u0119\u011a\7\67\2\2\u011a\u011b\7O\2\2\u011b"+
+		"\2\u0114\u0115\7R\2\2\u0115\u0116\5\"\22\2\u0116\u0117\7\4\2\2\u0117\u0118"+
+		"\b\20\1\2\u0118\37\3\2\2\2\u0119\u011a\7\67\2\2\u011a\u011b\7R\2\2\u011b"+
 		"\u011c\5\"\22\2\u011c\u011d\7\4\2\2\u011d\u011e\b\21\1\2\u011e!\3\2\2"+
 		"\2\u011f\u0126\7\n\2\2\u0120\u0121\5$\23\2\u0121\u0122\7\4\2\2\u0122\u0123"+
 		"\b\22\1\2\u0123\u0125\3\2\2\2\u0124\u0120\3\2\2\2\u0125\u0128\3\2\2\2"+
 		"\u0126\u0124\3\2\2\2\u0126\u0127\3\2\2\2\u0127\u0129\3\2\2\2\u0128\u0126"+
 		"\3\2\2\2\u0129\u012a\7\13\2\2\u012a#\3\2\2\2\u012b\u012c\5L\'\2\u012c"+
-		"\u012d\7O\2\2\u012d\u012e\b\23\1\2\u012e%\3\2\2\2\u012f\u0130\7:\2\2\u0130"+
-		"\u0131\5N(\2\u0131\u0132\7O\2\2\u0132\u0133\7\7\2\2\u0133\u0134\5\24\13"+
+		"\u012d\7R\2\2\u012d\u012e\b\23\1\2\u012e%\3\2\2\2\u012f\u0130\7:\2\2\u0130"+
+		"\u0131\5N(\2\u0131\u0132\7R\2\2\u0132\u0133\7\7\2\2\u0133\u0134\5\24\13"+
 		"\2\u0134\u0135\7\b\2\2\u0135\u0136\7\4\2\2\u0136\u0137\b\24\1\2\u0137"+
-		"\'\3\2\2\2\u0138\u0139\7:\2\2\u0139\u013a\5L\'\2\u013a\u013b\7O\2\2\u013b"+
+		"\'\3\2\2\2\u0138\u0139\7:\2\2\u0139\u013a\5L\'\2\u013a\u013b\7R\2\2\u013b"+
 		"\u013c\7\4\2\2\u013c\u013d\b\25\1\2\u013d)\3\2\2\2\u013e\u013f\5,\27\2"+
 		"\u013f\u0140\b\26\1\2\u0140\u0142\3\2\2\2\u0141\u013e\3\2\2\2\u0142\u0145"+
 		"\3\2\2\2\u0143\u0141\3\2\2\2\u0143\u0144\3\2\2\2\u0144+\3\2\2\2\u0145"+
@@ -4778,7 +4799,7 @@ public class CflatParser extends Parser {
 		"\2\2\u016c\u014e\3\2\2\2\u016c\u0151\3\2\2\2\u016c\u0154\3\2\2\2\u016c"+
 		"\u0157\3\2\2\2\u016c\u015a\3\2\2\2\u016c\u015d\3\2\2\2\u016c\u0160\3\2"+
 		"\2\2\u016c\u0163\3\2\2\2\u016c\u0166\3\2\2\2\u016c\u0169\3\2\2\2\u016d"+
-		"-\3\2\2\2\u016e\u016f\7O\2\2\u016f\u0170\7\f\2\2\u0170\u0171\5,\27\2\u0171"+
+		"-\3\2\2\2\u016e\u016f\7R\2\2\u016f\u0170\7\f\2\2\u0170\u0171\5,\27\2\u0171"+
 		"\u0172\b\30\1\2\u0172/\3\2\2\2\u0173\u0174\7>\2\2\u0174\u0175\7\7\2\2"+
 		"\u0175\u0176\5X-\2\u0176\u0177\7\b\2\2\u0177\u017a\5,\27\2\u0178\u0179"+
 		"\7?\2\2\u0179\u017b\5,\27\2\u017a\u0178\3\2\2\2\u017a\u017b\3\2\2\2\u017b"+
@@ -4806,7 +4827,7 @@ public class CflatParser extends Parser {
 		"\u01c2\u01c3\7B\2\2\u01c3\u01c4\7\f\2\2\u01c4\u01c5\5B\"\2\u01c5\u01c6"+
 		"\b!\1\2\u01c6A\3\2\2\2\u01c7\u01c8\5,\27\2\u01c8\u01c9\b\"\1\2\u01c9\u01cb"+
 		"\3\2\2\2\u01ca\u01c7\3\2\2\2\u01cb\u01cc\3\2\2\2\u01cc\u01ca\3\2\2\2\u01cc"+
-		"\u01cd\3\2\2\2\u01cdC\3\2\2\2\u01ce\u01cf\7I\2\2\u01cf\u01d0\7O\2\2\u01d0"+
+		"\u01cd\3\2\2\2\u01cdC\3\2\2\2\u01ce\u01cf\7I\2\2\u01cf\u01d0\7R\2\2\u01d0"+
 		"\u01d1\7\4\2\2\u01d1E\3\2\2\2\u01d2\u01d3\7G\2\2\u01d3\u01d4\7\4\2\2\u01d4"+
 		"G\3\2\2\2\u01d5\u01d6\7H\2\2\u01d6\u01d7\7\4\2\2\u01d7I\3\2\2\2\u01d8"+
 		"\u01d9\7F\2\2\u01d9\u01da\7\4\2\2\u01da\u01e1\b&\1\2\u01db\u01dc\7F\2"+
@@ -4814,7 +4835,7 @@ public class CflatParser extends Parser {
 		"\3\2\2\2\u01e0\u01d8\3\2\2\2\u01e0\u01db\3\2\2\2\u01e1K\3\2\2\2\u01e2"+
 		"\u01e3\5N(\2\u01e3\u01e4\b\'\1\2\u01e4M\3\2\2\2\u01e5\u01e6\5T+\2\u01e6"+
 		"\u01f7\b(\1\2\u01e7\u01e8\7\r\2\2\u01e8\u01e9\7\16\2\2\u01e9\u01f6\b("+
-		"\1\2\u01ea\u01eb\7\r\2\2\u01eb\u01ec\7P\2\2\u01ec\u01ed\7\16\2\2\u01ed"+
+		"\1\2\u01ea\u01eb\7\r\2\2\u01eb\u01ec\7S\2\2\u01ec\u01ed\7\16\2\2\u01ed"+
 		"\u01f6\b(\1\2\u01ee\u01ef\7\17\2\2\u01ef\u01f6\b(\1\2\u01f0\u01f1\7\7"+
 		"\2\2\u01f1\u01f2\5P)\2\u01f2\u01f3\7\b\2\2\u01f3\u01f4\b(\1\2\u01f4\u01f6"+
 		"\3\2\2\2\u01f5\u01e7\3\2\2\2\u01f5\u01ea\3\2\2\2\u01f5\u01ee\3\2\2\2\u01f5"+
@@ -4833,13 +4854,13 @@ public class CflatParser extends Parser {
 		"\2\2\u021d\u0230\b+\1\2\u021e\u021f\7=\2\2\u021f\u0220\7\63\2\2\u0220"+
 		"\u0230\b+\1\2\u0221\u0222\7=\2\2\u0222\u0223\7\64\2\2\u0223\u0230\b+\1"+
 		"\2\u0224\u0225\7=\2\2\u0225\u0226\7\65\2\2\u0226\u0230\b+\1\2\u0227\u0228"+
-		"\7\66\2\2\u0228\u0229\7O\2\2\u0229\u0230\b+\1\2\u022a\u022b\7\67\2\2\u022b"+
-		"\u022c\7O\2\2\u022c\u0230\b+\1\2\u022d\u022e\7O\2\2\u022e\u0230\b+\1\2"+
+		"\7\66\2\2\u0228\u0229\7R\2\2\u0229\u0230\b+\1\2\u022a\u022b\7\67\2\2\u022b"+
+		"\u022c\7R\2\2\u022c\u0230\b+\1\2\u022d\u022e\7R\2\2\u022e\u0230\b+\1\2"+
 		"\u022f\u0211\3\2\2\2\u022f\u0213\3\2\2\2\u022f\u0215\3\2\2\2\u022f\u0217"+
 		"\3\2\2\2\u022f\u0219\3\2\2\2\u022f\u021b\3\2\2\2\u022f\u021e\3\2\2\2\u022f"+
 		"\u0221\3\2\2\2\u022f\u0224\3\2\2\2\u022f\u0227\3\2\2\2\u022f\u022a\3\2"+
 		"\2\2\u022f\u022d\3\2\2\2\u0230U\3\2\2\2\u0231\u0232\7J\2\2\u0232\u0233"+
-		"\5N(\2\u0233\u0234\7O\2\2\u0234\u0235\7\4\2\2\u0235\u0236\b,\1\2\u0236"+
+		"\5N(\2\u0233\u0234\7R\2\2\u0234\u0235\7\4\2\2\u0235\u0236\b,\1\2\u0236"+
 		"W\3\2\2\2\u0237\u0238\5p9\2\u0238\u0239\7\5\2\2\u0239\u023a\5X-\2\u023a"+
 		"\u023b\b-\1\2\u023b\u0245\3\2\2\2\u023c\u023d\5p9\2\u023d\u023e\5n8\2"+
 		"\u023e\u023f\5X-\2\u023f\u0240\b-\1\2\u0240\u0245\3\2\2\2\u0241\u0242"+
@@ -4921,7 +4942,7 @@ public class CflatParser extends Parser {
 		"\b;\1\2\u0329\u032a\7,\2\2\u032a\u033e\b;\1\2\u032b\u032c\7-\2\2\u032c"+
 		"\u033e\b;\1\2\u032d\u032e\7\r\2\2\u032e\u032f\5X-\2\u032f\u0330\7\16\2"+
 		"\2\u0330\u0331\b;\1\2\u0331\u033e\3\2\2\2\u0332\u0333\7\3\2\2\u0333\u0334"+
-		"\7O\2\2\u0334\u033e\b;\1\2\u0335\u0336\7\60\2\2\u0336\u0337\7O\2\2\u0337"+
+		"\7R\2\2\u0334\u033e\b;\1\2\u0335\u0336\7\60\2\2\u0336\u0337\7R\2\2\u0337"+
 		"\u033e\b;\1\2\u0338\u0339\7\7\2\2\u0339\u033a\5v<\2\u033a\u033b\7\b\2"+
 		"\2\u033b\u033c\b;\1\2\u033c\u033e\3\2\2\2\u033d\u0329\3\2\2\2\u033d\u032b"+
 		"\3\2\2\2\u033d\u032d\3\2\2\2\u033d\u0332\3\2\2\2\u033d\u0335\3\2\2\2\u033d"+
@@ -4930,9 +4951,9 @@ public class CflatParser extends Parser {
 		"\b<\1\2\u0344\u0345\7\6\2\2\u0345\u0346\5X-\2\u0346\u0347\b<\1\2\u0347"+
 		"\u0349\3\2\2\2\u0348\u0344\3\2\2\2\u0349\u034c\3\2\2\2\u034a\u0348\3\2"+
 		"\2\2\u034a\u034b\3\2\2\2\u034b\u034e\3\2\2\2\u034c\u034a\3\2\2\2\u034d"+
-		"\u0342\3\2\2\2\u034d\u034e\3\2\2\2\u034ew\3\2\2\2\u034f\u0350\7P\2\2\u0350"+
-		"\u035d\b=\1\2\u0351\u0352\7N\2\2\u0352\u035d\b=\1\2\u0353\u0354\7M\2\2"+
-		"\u0354\u035d\b=\1\2\u0355\u0356\7O\2\2\u0356\u035d\b=\1\2\u0357\u0358"+
+		"\u0342\3\2\2\2\u034d\u034e\3\2\2\2\u034ew\3\2\2\2\u034f\u0350\7S\2\2\u0350"+
+		"\u035d\b=\1\2\u0351\u0352\7Q\2\2\u0352\u035d\b=\1\2\u0353\u0354\7P\2\2"+
+		"\u0354\u035d\b=\1\2\u0355\u0356\7R\2\2\u0356\u035d\b=\1\2\u0357\u0358"+
 		"\7\7\2\2\u0358\u0359\5X-\2\u0359\u035a\7\b\2\2\u035a\u035b\b=\1\2\u035b"+
 		"\u035d\3\2\2\2\u035c\u034f\3\2\2\2\u035c\u0351\3\2\2\2\u035c\u0353\3\2"+
 		"\2\2\u035c\u0355\3\2\2\2\u035c\u0357\3\2\2\2\u035dy\3\2\2\29\u0092\u0094"+

@@ -1,12 +1,8 @@
 package com.zirtia.type;
-
 import com.zirtia.ast.*;
-import com.zirtia.exception.*;
 import com.zirtia.utils.ErrorHandler;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import com.zirtia.exception.*;
+import java.util.*;
 
 public class TypeTable {
     static public TypeTable ilp32() { return newTable(1, 2, 4, 4, 4); }
@@ -186,4 +182,84 @@ public class TypeTable {
         return new PointerType(pointerSize, baseType);
     }
 
+    public void semanticCheck(ErrorHandler h) {
+        for (Type t : types()) {
+            // We can safely use "instanceof" instead of isXXXX() here,
+            // because the type refered from UserType must be also
+            // kept in this table.
+            if (t instanceof CompositeType) {
+                checkVoidMembers((CompositeType)t, h);
+                checkDuplicatedMembers((CompositeType)t, h);
+            }
+            else if (t instanceof ArrayType) {
+                checkVoidMembers((ArrayType)t, h);
+            }
+            checkRecursiveDefinition(t, h);
+        }
+    }
+
+    protected void checkVoidMembers(ArrayType t, ErrorHandler h) {
+        if (t.baseType().isVoid()) {
+            h.error("array cannot contain void");
+        }
+    }
+
+    protected void checkVoidMembers(CompositeType t, ErrorHandler h) {
+        for (Slot s : t.members()) {
+            if (s.type().isVoid()) {
+                h.error(t.location(), "struct/union cannot contain void");
+            }
+        }
+    }
+
+    protected void checkDuplicatedMembers(CompositeType t, ErrorHandler h) {
+        Map<String, Slot> seen = new HashMap<String, Slot>();
+        for (Slot s : t.members()) {
+            if (seen.containsKey(s.name())) {
+                h.error(t.location(),
+                        t.toString() + " has duplicated member: " + s.name());
+            }
+            seen.put(s.name(), s);
+        }
+    }
+
+    // #@@range/checkRecursiveDefinition{
+    protected void checkRecursiveDefinition(Type t, ErrorHandler h) {
+        _checkRecursiveDefinition(t, new HashMap<Type, Object>(), h);
+    }
+
+    static final protected Object checking = new Object();
+    static final protected Object checked = new Object();
+
+    protected void _checkRecursiveDefinition(Type t,
+                                             Map<Type, Object> marks,
+                                             ErrorHandler h) {
+        if (marks.get(t) == checking) {
+            h.error(((NamedType)t).location(),
+                    "recursive type definition: " + t);
+            return;
+        }
+        else if (marks.get(t) == checked) {
+            return;
+        }
+        else {
+            marks.put(t, checking);
+            if (t instanceof CompositeType) {
+                CompositeType ct = (CompositeType)t;
+                for (Slot s : ct.members()) {
+                    _checkRecursiveDefinition(s.type(), marks, h);
+                }
+            }
+            else if (t instanceof ArrayType) {
+                ArrayType at = (ArrayType)t;
+                _checkRecursiveDefinition(at.baseType(), marks, h);
+            }
+            else if (t instanceof UserType) {
+                UserType ut = (UserType)t;
+                _checkRecursiveDefinition(ut.realType(), marks, h);
+            }
+            marks.put(t, checked);
+        }
+    }
+    // #@@}
 }

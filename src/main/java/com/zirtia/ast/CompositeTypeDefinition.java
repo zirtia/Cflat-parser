@@ -1,15 +1,13 @@
 package com.zirtia.ast;
-
 import com.zirtia.type.*;
-
-import java.util.List;
+import java.util.*;
 
 abstract public class CompositeTypeDefinition extends TypeDefinition {
     protected List<Slot> members;
 
-    public CompositeTypeDefinition(TypeRef ref,
+    public CompositeTypeDefinition(Location loc, TypeRef ref,
                                    String name, List<Slot> membs) {
-        super(ref, name);
+        super(loc, ref, name);
         members = membs;
     }
 
@@ -22,4 +20,6 @@ abstract public class CompositeTypeDefinition extends TypeDefinition {
     public List<Slot> members() {
         return members;
     }
+
+
 }

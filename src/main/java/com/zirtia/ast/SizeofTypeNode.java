@@ -26,6 +26,11 @@ public class SizeofTypeNode extends ExprNode {
         return type;
     }
 
+    public Location location() {
+        return operand.location();
+    }
+
+
     public <S,E> E accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);
     }

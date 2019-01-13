@@ -1,8 +1,8 @@
 package com.zirtia.entity;
-
-import com.zirtia.ast.ExprNode;
-import com.zirtia.ast.TypeNode;
 import com.zirtia.type.*;
+import com.zirtia.ast.TypeNode;
+import com.zirtia.ast.Location;
+import com.zirtia.ast.ExprNode;
 
 abstract public class Entity {
     protected String name;
@@ -48,5 +48,27 @@ abstract public class Entity {
         return typeNode.type();
     }
 
+    public long allocSize() {
+        return type().allocSize();
+    }
+
+    public long alignment() {
+        return type().alignment();
+    }
+
+    public void refered() {
+        nRefered++;
+    }
+
+    public boolean isRefered() {
+        return (nRefered > 0);
+    }
+
+    public Location location() {
+        return typeNode.location();
+    }
+
     abstract public <T> T accept(EntityVisitor<T> visitor);
+
+
 }

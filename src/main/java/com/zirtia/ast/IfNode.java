@@ -5,8 +5,8 @@ public class IfNode extends StmtNode {
     protected StmtNode thenBody;
     protected StmtNode elseBody;
 
-    public IfNode(ExprNode c, StmtNode t, StmtNode e) {
-        super();
+    public IfNode(Location loc, ExprNode c, StmtNode t, StmtNode e) {
+        super(loc);
         this.cond = c;
         this.thenBody = t;
         this.elseBody = e;

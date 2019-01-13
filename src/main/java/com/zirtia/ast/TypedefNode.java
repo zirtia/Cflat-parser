@@ -4,8 +4,8 @@ import com.zirtia.type.*;
 public class TypedefNode extends TypeDefinition {
     protected TypeNode real;
 
-    public TypedefNode(TypeRef real, String name) {
-        super(new UserTypeRef(name), name);
+    public TypedefNode(Location loc, TypeRef real, String name) {
+        super(loc, new UserTypeRef(name), name);
         this.real = new TypeNode(real);
     }
 
@@ -26,8 +26,9 @@ public class TypedefNode extends TypeDefinition {
     }
 
     public Type definingType() {
-        return new UserType(name(), realTypeNode());
+        return new UserType(name(), realTypeNode(), location());
     }
+
 
     public <T> T accept(DeclarationVisitor<T> visitor) {
         return visitor.visit(this);

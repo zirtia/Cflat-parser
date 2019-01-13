@@ -1,12 +1,12 @@
 package com.zirtia.type;
-
 import com.zirtia.ast.TypeNode;
+import com.zirtia.ast.Location;
 
 public class UserType extends NamedType {
     protected TypeNode real;
 
-    public UserType(String name, TypeNode real) {
-        super(name);
+    public UserType(String name, TypeNode real, Location loc) {
+        super(name, loc);
         this.real = real;
     }
 

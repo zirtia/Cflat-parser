@@ -1,9 +1,5 @@
 package com.zirtia.entity;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ConstantTable implements Iterable<ConstantEntry> {
     protected Map<String, ConstantEntry> table;

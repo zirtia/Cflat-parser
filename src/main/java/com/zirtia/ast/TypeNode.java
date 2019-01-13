@@ -37,6 +37,12 @@ public class TypeNode extends Node {
         return type;
     }
 
+    public Location location() {
+        return typeRef == null ? null : typeRef.location();
+    }
+
+
+
     public TypeNode accept(ASTVisitor visitor) {
         throw new Error("do not call TypeNode#accept");
     }

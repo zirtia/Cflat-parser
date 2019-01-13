@@ -1,11 +1,6 @@
 package com.zirtia.ast;
-
 import com.zirtia.entity.*;
-
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Declarations {
     Set<DefinedVariable> defvars = new LinkedHashSet<DefinedVariable>();

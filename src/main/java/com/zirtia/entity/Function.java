@@ -1,8 +1,7 @@
 package com.zirtia.entity;
-
-import com.zirtia.ast.TypeNode;
 import com.zirtia.type.Type;
-
+import com.zirtia.type.FunctionType;
+import com.zirtia.ast.TypeNode;
 import java.util.List;
 
 abstract public class Function extends Entity {

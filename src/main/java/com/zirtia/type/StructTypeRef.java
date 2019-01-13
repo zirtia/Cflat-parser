@@ -1,9 +1,15 @@
 package com.zirtia.type;
+import com.zirtia.ast.Location;
 
 public class StructTypeRef extends TypeRef {
     protected String name;
 
     public StructTypeRef(String name) {
+        this(null, name);
+    }
+
+    public StructTypeRef(Location loc, String name) {
+        super(loc);
         this.name = name;
     }
 

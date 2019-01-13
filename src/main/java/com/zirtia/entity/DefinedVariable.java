@@ -1,8 +1,7 @@
 package com.zirtia.entity;
-
-import com.zirtia.ast.ExprNode;
-import com.zirtia.ast.TypeNode;
 import com.zirtia.type.Type;
+import com.zirtia.ast.TypeNode;
+import com.zirtia.ast.ExprNode;
 
 public class DefinedVariable extends Variable {
     protected ExprNode initializer;
@@ -49,6 +48,7 @@ public class DefinedVariable extends Variable {
     public void setInitializer(ExprNode expr) {
         this.initializer = expr;
     }
+
 
     public <T> T accept(EntityVisitor<T> visitor) {
         return visitor.visit(this);

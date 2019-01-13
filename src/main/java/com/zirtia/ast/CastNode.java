@@ -33,6 +33,12 @@ public class CastNode extends ExprNode {
         return type().size() > expr.type().size();
     }
 
+    public Location location() {
+        return typeNode.location();
+    }
+
+
+
     public <S,E> E accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);
     }

@@ -10,6 +10,7 @@ public class UndefinedVariable extends Variable {
     public boolean isPrivate() { return false; }
     public boolean isInitialized() { return false; }
 
+
     public <T> T accept(EntityVisitor<T> visitor) {
         return visitor.visit(this);
     }

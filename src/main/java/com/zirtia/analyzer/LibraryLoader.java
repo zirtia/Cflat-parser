@@ -4,7 +4,7 @@ import com.zirtia.ast.Declarations;
 import com.zirtia.exception.CompileException;
 import com.zirtia.exception.FileException;
 import com.zirtia.exception.SemanticException;
-
+import com.zirtia.Compiler;
 import java.io.File;
 import java.util.*;
 
@@ -45,7 +45,7 @@ public class LibraryLoader {
             // Already loaded import file.  Returns cached declarations.
             return decls;
         }
-        decls = Parser.parseDeclFile(searchLibrary(libid), this);
+        decls = Compiler.parseDeclFile(searchLibrary(libid), this);
         loadedLibraries.put(libid, decls);
         loadingLibraries.removeLast();
         return decls;
@@ -59,8 +59,7 @@ public class LibraryLoader {
                     return file;
                 }
             }
-            throw new FileException(
-                "no such library header file: " + libid);
+            throw new FileException( "no such library header file: " + libid);
         }
         catch (SecurityException ex) {
             throw new FileException(ex.getMessage());

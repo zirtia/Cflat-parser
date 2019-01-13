@@ -1,7 +1,6 @@
 package com.zirtia.utils;
-
-import java.io.OutputStream;
-import java.io.PrintStream;
+import com.zirtia.ast.Location;
+import java.io.*;
 
 public class ErrorHandler {
     protected String programId;
@@ -19,10 +18,17 @@ public class ErrorHandler {
         this.stream = new PrintStream(stream);
     }
 
+    public void error(Location loc, String msg) {
+        error(loc.toString() + ": " + msg);
+    }
 
     public void error(String msg) {
         stream.println(programId + ": error: " + msg);
         nError++;
+    }
+
+    public void warn(Location loc, String msg) {
+        warn(loc.toString() + ": " + msg);
     }
 
     public void warn(String msg) {

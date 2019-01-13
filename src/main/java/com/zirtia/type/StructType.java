@@ -1,13 +1,12 @@
 package com.zirtia.type;
-
 import com.zirtia.ast.Slot;
+import com.zirtia.ast.Location;
 import com.zirtia.utils.AsmUtils;
-
-import java.util.List;
+import java.util.*;
 
 public class StructType extends CompositeType {
-    public StructType(String name, List<Slot> membs) {
-        super(name, membs);
+    public StructType(String name, List<Slot> membs, Location loc) {
+        super(name, membs, loc);
     }
 
     public boolean isStruct() { return true; }

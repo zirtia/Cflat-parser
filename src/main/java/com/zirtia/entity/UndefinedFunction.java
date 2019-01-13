@@ -1,7 +1,5 @@
 package com.zirtia.entity;
-
 import com.zirtia.ast.TypeNode;
-
 import java.util.List;
 
 public class UndefinedFunction extends Function {
@@ -19,6 +17,8 @@ public class UndefinedFunction extends Function {
     public boolean isDefined() {
         return false;
     }
+
+
 
     public <T> T accept(EntityVisitor<T> visitor) {
         return visitor.visit(this);

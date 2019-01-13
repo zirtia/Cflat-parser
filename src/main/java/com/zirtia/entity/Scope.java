@@ -1,9 +1,7 @@
 package com.zirtia.entity;
-
 import com.zirtia.exception.*;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 abstract public class Scope {
     protected List<LocalScope> children;

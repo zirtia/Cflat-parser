@@ -47,4 +47,10 @@ public class Slot extends Node {
     public void setOffset(long offset) {
         this.offset = offset;
     }
+
+    public Location location() {
+        return typeNode.location();
+    }
+
+
 }

@@ -1,7 +1,6 @@
 package com.zirtia.ast;
-
-import com.zirtia.exception.*;
 import com.zirtia.type.Type;
+import com.zirtia.exception.*;
 
 abstract public class ExprNode extends Node {
     public ExprNode() {
@@ -37,5 +36,6 @@ abstract public class ExprNode extends Node {
             return false;
         }
     }
+
     abstract public <S,E> E accept(ASTVisitor<S,E> visitor);
 }

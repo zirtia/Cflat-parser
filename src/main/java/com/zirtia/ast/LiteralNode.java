@@ -1,14 +1,19 @@
 package com.zirtia.ast;
-
-import com.zirtia.type.Type;
 import com.zirtia.type.TypeRef;
+import com.zirtia.type.Type;
 
 abstract public class LiteralNode extends ExprNode {
+    protected Location location;
     protected TypeNode typeNode;
 
-    public LiteralNode(TypeRef ref) {
+    public LiteralNode(Location loc, TypeRef ref) {
         super();
+        this.location = loc;
         this.typeNode = new TypeNode(ref);
+    }
+
+    public Location location() {
+        return location;
     }
 
     public Type type() {

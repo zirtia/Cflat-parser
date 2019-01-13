@@ -1,8 +1,7 @@
 package com.zirtia.entity;
-
-import com.zirtia.exception.*;
+import com.zirtia.type.Type;
 import com.zirtia.utils.ErrorHandler;
-
+import com.zirtia.exception.*;
 import java.util.*;
 
 public class ToplevelScope extends Scope {
@@ -32,7 +31,9 @@ public class ToplevelScope extends Scope {
     public void declareEntity(Entity entity) throws SemanticException {
         Entity e = entities.get(entity.name());
         if (e != null) {
-            throw new SemanticException("duplicated declaration: " + entity.name());
+            throw new SemanticException("duplicated declaration: " +
+                    entity.name() + ": " +
+                    e.location() + " and " + entity.location());
         }
         entities.put(entity.name(), entity);
     }
@@ -43,7 +44,9 @@ public class ToplevelScope extends Scope {
     public void defineEntity(Entity entity) throws SemanticException {
         Entity e = entities.get(entity.name());
         if (e != null && e.isDefined()) {
-            throw new SemanticException("duplicated definition: " + entity.name());
+            throw new SemanticException("duplicated definition: " +
+                    entity.name() + ": " +
+                    e.location() + " and " + entity.location());
         }
         entities.put(entity.name(), entity);
     }
@@ -111,4 +114,20 @@ public class ToplevelScope extends Scope {
         return staticLocalVariables;
     }
 
+    public void checkReferences(ErrorHandler h) {
+        for (Entity ent : entities.values()) {
+            if (ent.isDefined()
+                    && ent.isPrivate()
+                    && !ent.isConstant()
+                    && !ent.isRefered()) {
+                h.warn(ent.location(), "unused variable: " + ent.name());
+            }
+        }
+        // do not check parameters
+        for (LocalScope funcScope : children) {
+            for (LocalScope s : funcScope.children) {
+                s.checkReferences(h);
+            }
+        }
+    }
 }

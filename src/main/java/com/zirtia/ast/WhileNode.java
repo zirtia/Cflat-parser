@@ -4,7 +4,8 @@ public class WhileNode extends StmtNode {
     protected StmtNode body;
     protected ExprNode cond;
 
-    public WhileNode(ExprNode cond, StmtNode body) {
+    public WhileNode(Location loc, ExprNode cond, StmtNode body) {
+        super(loc);
         this.cond = cond;
         this.body = body;
     }

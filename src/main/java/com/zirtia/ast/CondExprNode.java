@@ -35,6 +35,12 @@ public class CondExprNode extends ExprNode {
         this.elseExpr = expr;
     }
 
+    public Location location() {
+        return cond.location();
+    }
+
+
+
     public <S,E> E accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);
     }

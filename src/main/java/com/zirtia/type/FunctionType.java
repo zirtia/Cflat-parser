@@ -1,6 +1,6 @@
 package com.zirtia.type;
-
-import java.util.List;
+import com.zirtia.entity.Params;
+import java.util.*;
 
 public class FunctionType extends Type {
     protected Type returnType;

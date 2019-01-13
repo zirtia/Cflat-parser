@@ -4,8 +4,8 @@ public class DoWhileNode extends StmtNode {
     protected StmtNode body;
     protected ExprNode cond;
 
-    public DoWhileNode(StmtNode body, ExprNode cond) {
-        super();
+    public DoWhileNode(Location loc, StmtNode body, ExprNode cond) {
+        super(loc);
         this.body = body;
         this.cond = cond;
     }

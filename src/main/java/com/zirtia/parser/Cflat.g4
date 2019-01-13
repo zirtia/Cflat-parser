@@ -15,9 +15,11 @@ grammar Cflat;
 @parser::members {
     private LibraryLoader loader;
     private Set<String> knownTypedefs;
+    private String sourceName;
 
-    public CflatParser(TokenStream token,LibraryLoader loader) {
+    public CflatParser(String name,TokenStream token,LibraryLoader loader) {
         this(token);
+        sourceName = name;
         this.loader = loader;
         this.knownTypedefs = new HashSet<String>();
     }
@@ -47,19 +49,19 @@ grammar Cflat;
         return knownTypedefs.contains(name);
     }
 
-    private IntegerLiteralNode integerNode(String image) {
+    private IntegerLiteralNode integerNode(Location loc,String image) {
         long i = integerValue(image);
         if (image.endsWith("UL")) {
-            return new IntegerLiteralNode(IntegerTypeRef.ulongRef(), i);
+            return new IntegerLiteralNode(loc,IntegerTypeRef.ulongRef(), i);
         }
         else if (image.endsWith("L")) {
-            return new IntegerLiteralNode(IntegerTypeRef.longRef(), i);
+            return new IntegerLiteralNode(loc,IntegerTypeRef.longRef(), i);
         }
         else if (image.endsWith("U")) {
-            return new IntegerLiteralNode(IntegerTypeRef.uintRef(), i);
+            return new IntegerLiteralNode(loc,IntegerTypeRef.uintRef(), i);
         }
         else {
-            return new IntegerLiteralNode(IntegerTypeRef.intRef(), i);
+            return new IntegerLiteralNode(loc,IntegerTypeRef.intRef(), i);
         }
     }
 
@@ -83,7 +85,7 @@ grammar Cflat;
         return (long)s.charAt(0);
     }
 
-   private String stringValue(String _image) throws ParseException {
+   private String stringValue(String _image) {
        int pos = 0;
        int idx;
        StringBuffer buf = new StringBuffer();
@@ -141,6 +143,10 @@ grammar Cflat;
              default:  throw new Error("unknown escape sequence: \"\\" + c);
         }
     }
+
+    private Location location(Token t) {
+        return new Location(sourceName, t);
+    }
 }
 
 compilation_unit returns [AST ast]
@@ -148,7 +154,7 @@ compilation_unit returns [AST ast]
     {
         Declarations decls = $tds.decls;
         decls.add($iss.impdecls);
-        $ast =  new AST(decls);
+        $ast =  new AST(location($iss.start),decls);
     }
     ;
 
@@ -295,9 +301,9 @@ storage returns[boolean bool]
     ;
 
 params returns[Params parameters]
-    : VOID
+    : t=VOID
         {
-            $parameters = new Params(new ArrayList<Parameter>());
+            $parameters = new Params(location($t),new ArrayList<Parameter>());
         }
     | fps=fixedparams (',' '...'
                             {
@@ -314,7 +320,7 @@ fixedparams returns [Params parameters]
         List<Parameter> parameters1 = new ArrayList<Parameter>();
     }
     @after {
-        $parameters = new Params(parameters1);
+        $parameters = new Params($p.parameter.location(),parameters1);
     }
     : p=param
         {
@@ -336,9 +342,9 @@ param returns[Parameter parameter]
     ;
 
 block returns [BlockNode blockNode]
-     : '{' dvl=defvar_list ss=stmts '}'
+     : t='{' dvl=defvar_list ss=stmts '}'
         {
-            $blockNode = new BlockNode($dvl.result,$ss.ss);
+            $blockNode = new BlockNode(location($t),$dvl.result,$ss.ss);
         }
      ;
 
@@ -355,17 +361,17 @@ defvar_list returns[List<DefinedVariable> result]
     ;
 
 defstruct returns[StructNode structNode]
-    : STRUCT n=IDENTIFIER ml=member_list ';'
+    : t=STRUCT n=IDENTIFIER ml=member_list ';'
      {
-         $structNode = new StructNode(new StructTypeRef($n.text), $n.text, $ml.membs);
+         $structNode = new StructNode(location($t),new StructTypeRef($n.text), $n.text, $ml.membs);
      }
     ;
 
 
 defunion returns [UnionNode unionNode]
-    : UNION n=IDENTIFIER ml=member_list ';'
+    : t=UNION n=IDENTIFIER ml=member_list ';'
      {
-         $unionNode = new UnionNode(new UnionTypeRef($n.text), $n.text, $ml.membs);
+         $unionNode = new UnionNode(location($t),new UnionTypeRef($n.text), $n.text, $ml.membs);
      }
     ;
 
@@ -422,7 +428,7 @@ stmts returns [List<StmtNode>  ss]
         }
     | e=expr ';'
         {
-            $stmtNode = new ExprStmtNode($e.exprNode);
+            $stmtNode = new ExprStmtNode($e.exprNode.location(),$e.exprNode);
         }
     | b=block
         {
@@ -470,42 +476,42 @@ stmts returns [List<StmtNode>  ss]
 labeled_stmt returns[LabelNode labelNode]
     : t=IDENTIFIER ':'s=stmt
         {
-            $labelNode = new LabelNode($t.text, $s.stmtNode);
+            $labelNode = new LabelNode(location($t),$t.text, $s.stmtNode);
         }
     ;
 
 if_stmt returns[IfNode ifNode]
-    : IF '(' cond=expr ')' thenBody=stmt (ELSE elseBody=stmt)?
+    : t=IF '(' cond=expr ')' thenBody=stmt (ELSE elseBody=stmt)?
         {
-            $ifNode =  new IfNode($cond.exprNode, $thenBody.stmtNode, $elseBody.stmtNode);
+            $ifNode =  new IfNode(location($t),$cond.exprNode, $thenBody.stmtNode, $elseBody.stmtNode);
         }
     ;
 
 while_stmt returns[WhileNode whileNode]
-    : WHILE '(' cond=expr ')' body=stmt
+    : t=WHILE '(' cond=expr ')' body=stmt
         {
-            $whileNode = new WhileNode($cond.exprNode, $body.stmtNode);
+            $whileNode = new WhileNode(location($t),$cond.exprNode, $body.stmtNode);
         }
     ;
 
 dowhile_stmt returns[DoWhileNode doWhileNode]
-    : DO body=stmt WHILE '(' cond=expr ')' ';'
+    : t=DO body=stmt WHILE '(' cond=expr ')' ';'
         {
-            $doWhileNode = new DoWhileNode( $body.stmtNode, $cond.exprNode);
+            $doWhileNode = new DoWhileNode( location($t),$body.stmtNode, $cond.exprNode);
         }
     ;
 
 for_stmt returns[ForNode forNode]
-    : FOR '(' (init=expr)? ';' (cond=expr)? ';' (incr=expr)? ')' body=stmt
+    : t=FOR '(' (init=expr)? ';' (cond=expr)? ';' (incr=expr)? ')' body=stmt
         {
-            $forNode = new ForNode($init.exprNode, $cond.exprNode, $incr.exprNode, $body.stmtNode);
+            $forNode = new ForNode(location($t),$init.exprNode, $cond.exprNode, $incr.exprNode, $body.stmtNode);
         }
     ;
 
 switch_stmt returns[SwitchNode switchNode]
-    : SWITCH '(' cond=expr ')' '{' bodies=case_clauses '}'
+    : t=SWITCH '(' cond=expr ')' '{' bodies=case_clauses '}'
         {
-            $switchNode = new SwitchNode($cond.exprNode, $bodies.clauses);
+            $switchNode = new SwitchNode(location($t),$cond.exprNode, $bodies.clauses);
         }
     ;
 
@@ -529,7 +535,7 @@ case_clauses returns [List<CaseNode> clauses]
 case_clause returns[CaseNode caseNode]
     : values=cases body=case_body
         {
-         $caseNode =  new CaseNode($values.values, $body.blockNode);
+         $caseNode =  new CaseNode($body.blockNode.location(),$values.values, $body.blockNode);
         }
     ;
 
@@ -547,7 +553,7 @@ cases returns[List<ExprNode> values]
 default_clause returns[CaseNode caseNode ]
     : DEFAULT ':' body=case_body
         {
-            $caseNode = new CaseNode(new ArrayList<ExprNode>(), $body.blockNode);
+            $caseNode = new CaseNode($body.blockNode.location(),new ArrayList<ExprNode>(), $body.blockNode);
         }
     ;
 
@@ -559,7 +565,7 @@ case_body returns[BlockNode blockNode]
             if (! (stmts.getLast() instanceof BreakNode)) {
                 throw new Error("missing break statement at the last of case clause");
             }
-             $blockNode =  new BlockNode(new ArrayList<DefinedVariable>(),stmts);
+             $blockNode =  new BlockNode(stmts.get(0).location(),new ArrayList<DefinedVariable>(),stmts);
     }
     : (s=stmt
         {
@@ -570,33 +576,33 @@ case_body returns[BlockNode blockNode]
 
 goto_stmt returns [GotoNode gotoNode]
     @after{
-        $gotoNode = new GotoNode($n.text);
+        $gotoNode = new GotoNode(location($t),$n.text);
     }
-    : GOTO n=IDENTIFIER ';'
+    : t=GOTO n=IDENTIFIER ';'
     ;
 
 break_stmt returns [BreakNode breakNode]
     @after {
-        $breakNode = new BreakNode();
+        $breakNode = new BreakNode(location($t));
     }
-    : BREAK ';'
+    : t=BREAK ';'
     ;
 
 continue_stmt returns [ContinueNode continueNode]
     @after {
-        $continueNode = new ContinueNode();
+        $continueNode = new ContinueNode(location($t));
     }
-    : CONTINUE ';'
+    : t=CONTINUE ';'
     ;
 
 return_stmt returns [ReturnNode returnNode]
-    : RETURN ';'
+    : t=RETURN ';'
         {
-            $returnNode =  new ReturnNode(null);
+            $returnNode =  new ReturnNode(location($t),null);
         }
-    | RETURN expr0=expr ';'
+    | t=RETURN expr0=expr ';'
         {
-            $returnNode =  new ReturnNode($expr0.exprNode);
+            $returnNode =  new ReturnNode(location($t),$expr0.exprNode);
         }
     ;
 
@@ -666,62 +672,62 @@ fixedparam_typerefs returns[ParamTypeRefs paramTypeRefs]
     ;
 
  typeref_base returns[TypeRef typeRef]
-    : VOID
+    : t=VOID
         {
-            $typeRef =  new VoidTypeRef();
+            $typeRef =  new VoidTypeRef(location($t));
         }
-    | CHAR
+    | t=CHAR
         {
-            $typeRef =  IntegerTypeRef.charRef();
+            $typeRef =  IntegerTypeRef.charRef(location($t));
         }
-    | SHORT
+    | t=SHORT
         {
-            $typeRef =  IntegerTypeRef.shortRef();
+            $typeRef =  IntegerTypeRef.shortRef(location($t));
         }
-    | INT
+    | t=INT
         {
-            $typeRef =  IntegerTypeRef.intRef();
+            $typeRef =  IntegerTypeRef.intRef(location($t));
         }
-    | LONG
+    | t=LONG
         {
-            $typeRef =  IntegerTypeRef.longRef();
+            $typeRef =  IntegerTypeRef.longRef(location($t));
         }
-    |UNSIGNED CHAR
+    | t=UNSIGNED CHAR
         {
-            $typeRef =  IntegerTypeRef.ucharRef();
+            $typeRef =  IntegerTypeRef.ucharRef(location($t));
         }
-    | UNSIGNED SHORT
+    | t=UNSIGNED SHORT
         {
-            $typeRef =  IntegerTypeRef.ushortRef();
+            $typeRef =  IntegerTypeRef.ushortRef(location($t));
         }
-    | UNSIGNED INT
+    | t=UNSIGNED INT
         {
-            $typeRef =  IntegerTypeRef.uintRef();
+            $typeRef =  IntegerTypeRef.uintRef(location($t));
         }
-    | UNSIGNED LONG
+    | t=UNSIGNED LONG
         {
-            $typeRef =  IntegerTypeRef.ulongRef();
+            $typeRef =  IntegerTypeRef.ulongRef(location($t));
         }
-    | STRUCT n=IDENTIFIER
+    | t=STRUCT n=IDENTIFIER
         {
-            $typeRef =  new StructTypeRef($n.text);
+            $typeRef =  new StructTypeRef(location($t),$n.text);
         }
-    | UNION n=IDENTIFIER
+    | t=UNION n=IDENTIFIER
         {
-            $typeRef =  new UnionTypeRef($n.text);
+            $typeRef =  new UnionTypeRef(location($t),$n.text);
         }
     | n=IDENTIFIER
         {
            if (isType($n.text)){
-                $typeRef =  new UserTypeRef($n.text);
+                $typeRef =  new UserTypeRef(location($n),$n.text);
            }
         }
     ;
 
 typedef returns[TypedefNode typedefNode]
-    : TYPEDEF t=typeref n=IDENTIFIER ';'
+    : td=TYPEDEF t=typeref n=IDENTIFIER ';'
     {   addType($n.text);
-        $typedefNode =  new TypedefNode($t.typeRef, $n.text);
+        $typedefNode =  new TypedefNode(location($td),$t.typeRef, $n.text);
     }
     ;
 
@@ -1017,19 +1023,19 @@ args returns[ List<ExprNode> arguments]
 primary returns [ExprNode exprNode]
     : t=INTEGER
         {
-            $exprNode  = integerNode($t.text);
+            $exprNode  = integerNode(location($t),$t.text);
         }
     | t=CHARACTER
         {
-            $exprNode  = new IntegerLiteralNode(IntegerTypeRef.charRef(),characterCode($t.text));
+            $exprNode  = new IntegerLiteralNode(location($t),IntegerTypeRef.charRef(),characterCode($t.text));
         }
     | t=STRING
         {
-            $exprNode  = new StringLiteralNode(new PointerTypeRef(IntegerTypeRef.charRef()),stringValue($t.text));
+            $exprNode  = new StringLiteralNode(location($t),new PointerTypeRef(IntegerTypeRef.charRef()),stringValue($t.text));
         }
     | t=IDENTIFIER
         {
-            $exprNode  = new VariableNode($t.text);
+            $exprNode  = new VariableNode(location($t),$t.text);
         }
     | '(' e=expr ')'
         {
@@ -1080,4 +1086,4 @@ INTEGER
 
 fragment ID_LETTER : 'a'..'z'|'A'..'Z'|'_' ;
 fragment DIGIT : '0'..'9';
-fragment ESCAPE : '\\' '0'..'7' '0'..'7' '0'..'7'
+fragment ESCAPE : '\\' '0'..'7' '0'..'7' '0'..'7';

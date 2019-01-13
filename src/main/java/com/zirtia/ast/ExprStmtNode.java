@@ -3,7 +3,8 @@ package com.zirtia.ast;
 public class ExprStmtNode extends StmtNode {
     protected ExprNode expr;
 
-    public ExprStmtNode(ExprNode expr) {
+    public ExprStmtNode(Location loc, ExprNode expr) {
+        super(loc);
         this.expr = expr;
     }
 

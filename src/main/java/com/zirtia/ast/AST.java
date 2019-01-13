@@ -1,19 +1,23 @@
 package com.zirtia.ast;
-
 import com.zirtia.entity.*;
-
-import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
+import java.io.PrintStream;
 
 public class AST extends Node {
+    protected Location source;
     protected Declarations declarations;
     protected ToplevelScope scope;
     protected ConstantTable constantTable;
 
-    public AST(Declarations declarations) {
+    public AST(Location source, Declarations declarations) {
         super();
+        this.source = source;
         this.declarations = declarations;
+    }
+
+    public Location location() {
+        return source;
     }
 
     public List<TypeDefinition> types() {
@@ -61,6 +65,7 @@ public class AST extends Node {
         return declarations.defuns();
     }
 
+    // called by LocalResolver
     public void setScope(ToplevelScope scope) {
         if (this.scope != null) {
             throw new Error("must not happen: ToplevelScope set twice");
@@ -75,6 +80,7 @@ public class AST extends Node {
         return scope;
     }
 
+    // called by LocalResolver
     public void setConstantTable(ConstantTable table) {
         if (this.constantTable != null) {
             throw new Error("must not happen: ConstantTable set twice");
@@ -89,12 +95,32 @@ public class AST extends Node {
         return constantTable;
     }
 
-    @Override
-    public String toString() {
-        return "AST{" +
-                "declarations=" + declarations +
-                ", scope=" + scope +
-                ", constantTable=" + constantTable +
-                '}';
+    public StmtNode getSingleMainStmt() {
+        for (DefinedFunction f : definedFunctions()) {
+            if (f.name().equals("main")) {
+                if (f.body().stmts().isEmpty()) {
+                    return null;
+                }
+                return f.body().stmts().get(0);
+            }
+        }
+        return null;
     }
+
+    public ExprNode getSingleMainExpr() {
+        StmtNode stmt = getSingleMainStmt();
+        if (stmt == null) {
+            return null;
+        }
+        else if (stmt instanceof ExprStmtNode) {
+            return ((ExprStmtNode)stmt).expr();
+        }
+        else if (stmt instanceof ReturnNode) {
+            return ((ReturnNode)stmt).expr();
+        }
+        else {
+            return null;
+        }
+    }
+
 }

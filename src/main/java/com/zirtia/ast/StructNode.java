@@ -1,12 +1,10 @@
 package com.zirtia.ast;
-
 import com.zirtia.type.*;
-
-import java.util.List;
+import java.util.*;
 
 public class StructNode extends CompositeTypeDefinition {
-    public StructNode(TypeRef ref, String name, List<Slot> membs) {
-        super(ref, name, membs);
+    public StructNode(Location loc, TypeRef ref, String name, List<Slot> membs) {
+        super(loc, ref, name, membs);
     }
 
     public String kind() {
@@ -19,7 +17,7 @@ public class StructNode extends CompositeTypeDefinition {
 
     // #@@range/definingType{
     public Type definingType() {
-        return new StructType(name(), members());
+        return new StructType(name(), members(), location());
     }
     // #@@}
 

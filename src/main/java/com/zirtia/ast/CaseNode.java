@@ -1,12 +1,12 @@
 package com.zirtia.ast;
-
-import java.util.List;
+import java.util.*;
 
 public class CaseNode extends StmtNode {
     protected List<ExprNode> values;
     protected BlockNode body;
 
-    public CaseNode(List<ExprNode> values, BlockNode body) {
+    public CaseNode(Location loc, List<ExprNode> values, BlockNode body) {
+        super(loc);
         this.values = values;
         this.body = body;
     }
@@ -22,6 +22,8 @@ public class CaseNode extends StmtNode {
     public BlockNode body() {
         return body;
     }
+
+
 
     public <S,E> S accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);

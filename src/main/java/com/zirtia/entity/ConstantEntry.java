@@ -1,6 +1,5 @@
 package com.zirtia.entity;
 
-
 public class ConstantEntry {
     protected String value;
 
@@ -11,6 +10,5 @@ public class ConstantEntry {
     public String value() {
         return value;
     }
-
 
 }

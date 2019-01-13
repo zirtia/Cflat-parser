@@ -1,14 +1,14 @@
 package com.zirtia.entity;
-
-import com.zirtia.type.ParamTypeRefs;
 import com.zirtia.type.TypeRef;
-
-import java.util.ArrayList;
+import com.zirtia.type.ParamTypeRefs;
+import com.zirtia.ast.Location;
 import java.util.List;
+import java.util.ArrayList;
 
-public class Params extends ParamSlots<Parameter> {
-    public Params(List<Parameter> paramDescs) {
-        super(paramDescs, false);
+public class Params extends ParamSlots<Parameter>
+         {
+    public Params(Location loc, List<Parameter> paramDescs) {
+        super(loc, paramDescs, false);
     }
 
     public List<Parameter> parameters() {
@@ -20,7 +20,7 @@ public class Params extends ParamSlots<Parameter> {
         for (Parameter param : paramDescriptors) {
             typerefs.add(param.typeNode().typeRef());
         }
-        return new ParamTypeRefs(typerefs, vararg);
+        return new ParamTypeRefs(location, typerefs, vararg);
     }
 
     public boolean equals(Object other) {
@@ -31,4 +31,6 @@ public class Params extends ParamSlots<Parameter> {
         return other.vararg == vararg
                 && other.paramDescriptors.equals(paramDescriptors);
     }
+    
+
 }

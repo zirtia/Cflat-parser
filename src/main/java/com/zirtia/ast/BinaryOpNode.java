@@ -51,6 +51,12 @@ public class BinaryOpNode extends ExprNode {
         this.right = right;
     }
 
+    public Location location() {
+        return left.location();
+    }
+
+
+
     public <S,E> E accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);
     }

@@ -1,17 +1,15 @@
 package com.zirtia.ast;
-
 import com.zirtia.entity.DefinedVariable;
 import com.zirtia.entity.LocalScope;
-
-import java.util.List;
+import java.util.*;
 
 public class BlockNode extends StmtNode {
     protected List<DefinedVariable> variables;
     protected List<StmtNode> stmts;
     protected LocalScope scope;
 
-    public BlockNode(List<DefinedVariable> vars, List<StmtNode> stmts) {
-        super();
+    public BlockNode(Location loc, List<DefinedVariable> vars, List<StmtNode> stmts) {
+        super(loc);
         this.variables = vars;
         this.stmts = stmts;
     }
@@ -36,6 +34,7 @@ public class BlockNode extends StmtNode {
     public void setScope(LocalScope scope) {
         this.scope = scope;
     }
+
 
     public <S,E> S accept(ASTVisitor<S,E> visitor) {
         return visitor.visit(this);

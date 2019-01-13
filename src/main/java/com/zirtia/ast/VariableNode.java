@@ -1,14 +1,15 @@
 package com.zirtia.ast;
-
-import com.zirtia.entity.DefinedVariable;
-import com.zirtia.entity.Entity;
 import com.zirtia.type.Type;
+import com.zirtia.entity.Entity;
+import com.zirtia.entity.DefinedVariable;
 
 public class VariableNode extends LHSNode {
+    private Location location;
     private String name;
     private Entity entity;
 
-    public VariableNode(String name) {
+    public VariableNode(Location loc, String name) {
+        this.location = loc;
         this.name = name;
     }
 
@@ -46,6 +47,10 @@ public class VariableNode extends LHSNode {
 
     protected Type origType() {
         return entity().type();
+    }
+
+    public Location location() {
+        return location;
     }
 
     public <S,E> E accept(ASTVisitor<S,E> visitor) {
