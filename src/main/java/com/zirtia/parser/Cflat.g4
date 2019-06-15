@@ -10,6 +10,9 @@ grammar Cflat;
     import java.util.Set;
     import java.util.*;
     import com.zirtia.exception.*;
+    import static com.zirtia.utils.ESCUtils.characterCode;
+    import static com.zirtia.utils.ESCUtils.integerValue;
+    import static com.zirtia.utils.ESCUtils.stringValue;
 }
 
 @parser::members {
@@ -65,96 +68,17 @@ grammar Cflat;
         }
     }
 
-    private long integerValue(String image) {
-        String s = image.replaceFirst("[UL]+", "");
-        if (s.startsWith("0x") || s.startsWith("0X")) {
-            return Long.parseLong(s.substring(2), 16);
-        }
-        else if (s.startsWith("0") && !s.equals("0")) {
-            return Long.parseLong(s.substring(1), 8);
-        }
-        else {
-            return Long.parseLong(s, 10);
-        }
-    }
-    private long characterCode(String image) {
-        String s = stringValue(image);
-        if (s.length() != 1) {
-            throw new Error("must not happen: character length > 1");
-        }
-        return (long)s.charAt(0);
-    }
-
-   private String stringValue(String _image) {
-       int pos = 0;
-       int idx;
-       StringBuffer buf = new StringBuffer();
-       String image = _image.substring(1, _image.length() - 1);
-
-       while ((idx = image.indexOf("\\", pos)) >= 0) {
-           buf.append(image.substring(pos, idx));
-           if (image.length() >= idx + 4
-                   && Character.isDigit(image.charAt(idx+1))
-                   && Character.isDigit(image.charAt(idx+2))
-                   && Character.isDigit(image.charAt(idx+3))) {
-               buf.append(unescapeOctal(image.substring(idx+1, idx+4)));
-               pos = idx + 4;
-           }
-           else {
-               buf.append(unescapeSeq(image.charAt(idx+1)));
-               pos = idx + 2;
-           }
-       }
-       if (pos < image.length()) {
-           buf.append(image.substring(pos, image.length()));
-       }
-       return buf.toString();
-   }
-
-    private static final int charMax = 255;
-
-    private char unescapeOctal(String digits){
-        int i = Integer.parseInt(digits, 8);
-        if (i > charMax) {
-            throw new Error(
-                "octal character sequence too big: \\" + digits);
-        }
-        return (char)i;
-    }
-
-    private static final char bell = 7;
-    private static final char backspace = 8;
-    private static final char escape = 27;
-    private static final char vt = 11;
-
-    private char unescapeSeq(char c) {
-        switch (c) {
-             case '0': return '\0';
-             case '"': return '"';
-             case '\'': return '\'';
-             case 'a': return bell;
-             case 'b': return backspace;
-             case 'e': return escape;
-             case 'f': return '\f';
-             case 'n': return '\n';
-             case 'r': return '\r';
-             case 't': return '\t';
-             case 'v': return vt;
-             default:  throw new Error("unknown escape sequence: \"\\" + c);
-        }
-    }
-
     private Location location(Token t) {
         return new Location(sourceName, t);
     }
 }
 
 compilation_unit returns [AST ast]
-    : iss=import_stmts tds=top_defs
+    : import_stmts top_defs EOF
     {
-        Declarations decls = $tds.decls;
-        decls.add($iss.impdecls);
-        $ast =  new AST(location($iss.start),decls);
+        Declarations decls = $top_defs.decls;
+        decls.add($import_stmts.impdecls);
+        $ast = new AST(location($import_stmts.start),decls);
     }
     ;
 
@@ -162,33 +86,33 @@ declaration_file returns [Declarations decls]
     @init {
         $decls = new Declarations();
     }
-    : iss=import_stmts
+    : import_stmts
         {
-            $decls.add($iss.impdecls);
+            $decls.add($import_stmts.impdecls);
         }
-    ( fd=funcdecl
+    ( funcdecl
         {
-            $decls.addFuncdecl($fd.undefinedFunction);
+            $decls.addFuncdecl($funcdecl.undefinedFunction);
         }
-    | vd=vardecl
+    | vardecl
         {
-            $decls.addVardecl($vd.undefinedVariable);
+            $decls.addVardecl($vardecl.undefinedVariable);
         }
-    | dc=defconst
+    | defconst
         {
-            $decls.addConstant($dc.contant);
+            $decls.addConstant($defconst.contant);
         }
-    | ds=defstruct
+    | defstruct
         {
-            $decls.addDefstruct($ds.structNode);
+            $decls.addDefstruct($defstruct.structNode);
         }
-    | du=defunion
+    | defunion
         {
-            $decls.addDefunion($du.unionNode);
+            $decls.addDefunion($defunion.unionNode);
         }
-    | td=typedef
+    | typedef
         {
-            $decls.addTypedef($td.typedefNode);
+            $decls.addTypedef($typedef.typedefNode);
         }
     )*
     ;
@@ -197,9 +121,9 @@ import_stmts returns [Declarations impdecls]
     @init {
         $impdecls = new Declarations();
     }
-    : (is=import_stmt
+    : (import_stmt
         {
-            Declarations decls = loader.loadLibrary($is.impdecl);
+            Declarations decls = loader.loadLibrary($import_stmt.impdecl);
             if (decls != null) {
               $impdecls.add(decls);
               addKnownTypedefs(decls.typedefs());
@@ -269,11 +193,11 @@ defvars returns[List<DefinedVariable> defs]
     }
     : s=storage t=type n=IDENTIFIER ('=' e=expr)?
     {
-        $defs.add(new DefinedVariable($s.bool, $t.typeNode, $n.text, $e.exprNode));
+        $defs.add(new DefinedVariable($s.bool, $t.typeNode, $n.text, $e.ctx != null ? $e.exprNode : null));
     }
     ( ',' n1=IDENTIFIER ('=' e1=expr)?
         {
-               $defs.add(new DefinedVariable($s.bool, $t.typeNode, $n1.text, $e1.exprNode));
+               $defs.add(new DefinedVariable($s.bool, $t.typeNode, $n1.text,  $e1.ctx != null ? $e1.exprNode : null));
         }
     )* ';'
     ;
@@ -415,60 +339,61 @@ stmts returns [List<StmtNode>  ss]
     }
     : (s=stmt
         {
-            if (stmt().stmtNode != null) $ss.add($s.stmtNode);
+            if ($s.stmtNode != null) $ss.add($s.stmtNode);
         }
     )*
     ;
 
  stmt returns[StmtNode stmtNode]
     : ( ';'
-    | ls=labeled_stmt
+
+    | labeled_stmt
         {
-            $stmtNode = $ls.labelNode;
+            $stmtNode = $labeled_stmt.labelNode;
         }
-    | e=expr ';'
+    | expr ';'
         {
-            $stmtNode = new ExprStmtNode($e.exprNode.location(),$e.exprNode);
+            $stmtNode = new ExprStmtNode($expr.exprNode.location(),$expr.exprNode);
         }
-    | b=block
+    | block
         {
-            $stmtNode =$b.blockNode;
+            $stmtNode =$block.blockNode;
         }
-    | is=if_stmt
+    | if_stmt
         {
-            $stmtNode =$is.ifNode;
+            $stmtNode =$if_stmt.ifNode;
         }
-    | ws=while_stmt
+    | while_stmt
         {
-            $stmtNode = $ws.whileNode;
+            $stmtNode = $while_stmt.whileNode;
         }
-    | ds=dowhile_stmt
+    | dowhile_stmt
         {
-            $stmtNode = $ds.doWhileNode;
+            $stmtNode = $dowhile_stmt.doWhileNode;
         }
-    | fs=for_stmt
+    | for_stmt
         {
-            $stmtNode =$fs.forNode;
+            $stmtNode =$for_stmt.forNode;
         }
-    | ss=switch_stmt
+    | switch_stmt
         {
-            $stmtNode =$ss.switchNode;
+            $stmtNode =$switch_stmt.switchNode;
         }
-    | bs=break_stmt
+    | break_stmt
         {
-            $stmtNode =$bs.breakNode;
+            $stmtNode =$break_stmt.breakNode;
         }
-    | cs=continue_stmt
+    | continue_stmt
         {
-            $stmtNode = $cs.continueNode;
+            $stmtNode = $continue_stmt.continueNode;
         }
-    | gs=goto_stmt
+    | goto_stmt
         {
-            $stmtNode = $gs.gotoNode;
+            $stmtNode = $goto_stmt.gotoNode;
         }
-    | rs=return_stmt
+    | return_stmt
         {
-            $stmtNode =  $rs.returnNode;
+            $stmtNode = $return_stmt.returnNode;
         }
     )
     ;
@@ -481,37 +406,37 @@ labeled_stmt returns[LabelNode labelNode]
     ;
 
 if_stmt returns[IfNode ifNode]
-    : t=IF '(' cond=expr ')' thenBody=stmt (ELSE elseBody=stmt)?
+    : IF '(' cond = expr ')' thenBody = stmt (ELSE elseBody = stmt)?
         {
-            $ifNode =  new IfNode(location($t),$cond.exprNode, $thenBody.stmtNode, $elseBody.stmtNode);
+            $ifNode = new IfNode(location($IF),$cond.exprNode, $thenBody.stmtNode, $elseBody.ctx != null ? $elseBody.stmtNode : null);
         }
     ;
 
 while_stmt returns[WhileNode whileNode]
-    : t=WHILE '(' cond=expr ')' body=stmt
+    : WHILE '(' cond = expr ')' body = stmt
         {
-            $whileNode = new WhileNode(location($t),$cond.exprNode, $body.stmtNode);
+            $whileNode = new WhileNode(location($WHILE),$cond.exprNode, $body.stmtNode);
         }
     ;
 
 dowhile_stmt returns[DoWhileNode doWhileNode]
-    : t=DO body=stmt WHILE '(' cond=expr ')' ';'
+    : DO body = stmt WHILE '(' cond = expr ')' ';'
         {
-            $doWhileNode = new DoWhileNode( location($t),$body.stmtNode, $cond.exprNode);
+            $doWhileNode = new DoWhileNode( location($DO),$body.stmtNode, $cond.exprNode);
         }
     ;
 
 for_stmt returns[ForNode forNode]
-    : t=FOR '(' (init=expr)? ';' (cond=expr)? ';' (incr=expr)? ')' body=stmt
+    : FOR '(' (init = expr)? ';' (cond = expr)? ';' (incr = expr)? ')' body = stmt
         {
-            $forNode = new ForNode(location($t),$init.exprNode, $cond.exprNode, $incr.exprNode, $body.stmtNode);
+            $forNode = new ForNode(location($FOR),$init.ctx != null ? $init.exprNode : null , $cond.ctx != null ? $cond.exprNode : null ,  $incr.ctx != null ? $incr.exprNode : null, $body.stmtNode);
         }
     ;
 
 switch_stmt returns[SwitchNode switchNode]
-    : t=SWITCH '(' cond=expr ')' '{' bodies=case_clauses '}'
+    : SWITCH '(' cond = expr ')' '{' bodies = case_clauses '}'
         {
-            $switchNode = new SwitchNode(location($t),$cond.exprNode, $bodies.clauses);
+            $switchNode = new SwitchNode(location($SWITCH),$cond.exprNode, $bodies.clauses);
         }
     ;
 
@@ -522,18 +447,18 @@ case_clauses returns [List<CaseNode> clauses]
     }
     :(case_clause
         {
-            $clauses.add(case_clause().caseNode);
+            $clauses.add($case_clause.caseNode);
         }
     )*
     (default_clause
         {
-            $clauses.add(default_clause().caseNode);
+            $clauses.add($default_clause.caseNode);
         }
     )?
     ;
 
 case_clause returns[CaseNode caseNode]
-    : values=cases body=case_body
+    : values = cases body = case_body
         {
          $caseNode =  new CaseNode($body.blockNode.location(),$values.values, $body.blockNode);
         }
@@ -543,9 +468,9 @@ cases returns[List<ExprNode> values]
     @init {
         $values = new ArrayList<ExprNode>();
     }
-    : (CASE p=primary ':'
+    : (CASE primary ':'
         {
-            $values.add($p.exprNode);
+            $values.add($primary.exprNode);
         }
     )+
     ;
@@ -915,14 +840,14 @@ opassign_op returns[String op]
     )
     ;
 
-term returns[ExprNode exprNode]
-    :'(' t=type ')' n=term
+term returns[ExprNode exprNode] // ( ++ -- + - ! ~ * & sizeof sizeof( sizeofD INTEGER char string iden (expr
+    :'(' type ')' term
         {
-            $exprNode =  new CastNode($t.typeNode, $n.exprNode);
+            $exprNode =  new CastNode($type.typeNode, $term.exprNode);
         }
-    | u=unary
+    | unary
         {
-            $exprNode = $u.exprNode ;
+            $exprNode = $unary.exprNode ;
         }
     ;
 unary returns [ExprNode exprNode]
@@ -1072,12 +997,12 @@ TYPEDEF : 'typedef';
 IMPORT : 'import';
 SIZEOF : 'sizeof';
 
-WS: [ \t\r\n\u000C]+ -> skip;
-LINE_COMMENT : '//' ~[\r\n]* ('\n'|'\r\n'|'\r')?  -> skip ;
+WS:  (' '|'\t'|'\r'|'\n')+ -> skip ;
+LINE_COMMENT : '//' .*? '\r'? '\n' -> skip ;
 COMMENT : '/*' .*? '*/' -> skip ;
 
-STRING:       '"'((~["\\\r\n])+ | . | ESCAPE )*?'"';
-CHARACTER:    '\''(~['\\\r\n] | | . | ESCAPE )'\'';
+STRING:       '"' ( ESC | ~["\\] )*? '"';
+CHARACTER:    '\''( UNICODE | . )'\'';
 IDENTIFIER :  ID_LETTER (ID_LETTER|DIGIT)* ;
 INTEGER
     : '1'..'9' DIGIT* 'U'? 'L'?
@@ -1086,4 +1011,6 @@ INTEGER
 
 fragment ID_LETTER : 'a'..'z'|'A'..'Z'|'_' ;
 fragment DIGIT : '0'..'9';
-fragment ESCAPE : '\\' '0'..'7' '0'..'7' '0'..'7';
+fragment ESC : '\\' (["\\/bfnrt] | UNICODE) ;
+fragment UNICODE : 'u' HEX HEX HEX HEX ;
+fragment HEX : [0-9a-fA-F] ;
