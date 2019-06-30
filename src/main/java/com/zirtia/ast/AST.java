@@ -7,6 +7,7 @@ import java.io.PrintStream;
 public class AST extends Node {
     protected Location source;
     protected Declarations declarations;
+    protected BlockNode blockNode;
     protected ToplevelScope scope;
     protected ConstantTable constantTable;
 
@@ -14,6 +15,11 @@ public class AST extends Node {
         super();
         this.source = source;
         this.declarations = declarations;
+    }
+
+    public AST(BlockNode blockNode) {
+        super();
+        this.blockNode = blockNode;
     }
 
     public Location location() {

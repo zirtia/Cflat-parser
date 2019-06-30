@@ -12,6 +12,12 @@ public class IfNode extends StmtNode {
         this.elseBody = e;
     }
 
+    public IfNode(Location loc, ExprNode c, StmtNode t) {
+        super(loc);
+        this.cond = c;
+        this.thenBody = t;
+    }
+
     public ExprNode cond() {
         return cond;
     }

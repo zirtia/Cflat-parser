@@ -53,15 +53,15 @@ public class Compiler {
     public AST compile(String srcPath,LibraryLoader libraryLoader) throws CompileException {
         AST ast = Compiler.parseFile(new File(srcPath), libraryLoader);
         AST sem = semanticAnalyze(ast, TypeTable.ilp32());
-        return sem;
+        return ast;
     }
 
     public AST semanticAnalyze(AST ast, TypeTable types) throws SemanticException {
         new LocalResolver(errorHandler).resolve(ast);
         new TypeResolver(types, errorHandler).resolve(ast);
-        types.semanticCheck(errorHandler);
-        new DereferenceChecker(types, errorHandler).check(ast);
-        new TypeChecker(types, errorHandler).check(ast);
+//        types.semanticCheck(errorHandler);
+//        new DereferenceChecker(types, errorHandler).check(ast);
+//        new TypeChecker(types, errorHandler).check(ast);
         return ast;
     }
 
